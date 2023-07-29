@@ -1,0 +1,38 @@
+extends layout
+
+block css
+    link(rel='stylesheet', href='/CSS/style.css')
+block flash
+    #flash-messages
+        if flash && flash.success
+                .success= flash.success
+        else if flash && flash.error
+                .error= flash.error
+    script.
+        function displayFlashMessage() {
+            // Get the flash message element
+            const flashMessage = document.getElementById('flash-messages');
+
+            // Show the flash message only if it contains text
+            if (flashMessage.textContent.trim() !== "") {
+                flashMessage.style.display = 'block';
+
+                // Set the time in milliseconds for the message to disappear (e.g., 3000ms = 3 seconds)
+                const duration = 3000;
+
+                // After the specified duration, hide the flash message
+                setTimeout(() => {
+                    flashMessage.style.display = 'none';
+                }, duration);
+            }
+        }
+        // Call the function to display the flash message
+        displayFlashMessage();
+block menu
+    if showMenuBar
+        .menu
+            a(class="menu-item" href="/dashboard") Dashboard
+            a(class="menu-item" href="/base") Base
+            a(class="menu-item" href="/planet") Planet
+            a(class="menu-item" href="/logout") Logout
+            a(class="menu-item" href="#") Parameter

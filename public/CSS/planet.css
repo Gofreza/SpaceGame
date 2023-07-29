@@ -1,0 +1,47 @@
+body {
+    width: 100%;
+    background: transparent;
+}
+
+html {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: url("/imgs/planet_background.jpg") center/cover;
+}
+
+.container-planet {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.square-container {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 150px); /* Adjust the size of the squares here */
+    grid-template-rows: repeat(2, 150px); /* Adjust the size of the squares here */
+    gap: 60px; /* Adjust the gap between squares here */
+    background-color: rgba(6, 8, 16, 0.75);
+    border: 2px solid white;
+    padding: 20px;
+}
+
+.planet-item {
+    position: relative;
+    background-color: #333;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 15%;
+    border: 1px solid white;
+}
+
+.planet-item img {
+    width: 150px;
+    height: 150px;
+    border-radius: 15%;
+}

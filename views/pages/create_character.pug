@@ -1,0 +1,85 @@
+extends ../layouts/base
+
+block css
+    link(rel='stylesheet', href='/CSS/log.css')
+block layout-content
+    div.container
+        h1 Create a character
+        form(action='/create_character', id="albumForm", method='POST')
+            label(for='name') Username:
+            input(type='text', name='name', id='name', required)
+
+            //Level is 1 for every new character
+
+            label(for='class_name') Class:
+            select(name='class_name' id='class_name' required)
+                option(value="Adventurer") Adventurer
+                option(value="Merchant") Merchant
+                option(value="Soldier") Soldier
+                option(value="Researcher") Researcher
+
+            label(for="selectedImage") Select Profile Picture:
+            input(type="hidden", name="selectedImage", id="selectedImage" required)
+            div#album-container
+                div#prev-arrow
+                    i(class='fas fa-chevron-left')
+                div#album
+                    each image, index in images
+                        div.thumbnail
+                            img(id=`image-${index}`, src=`data:image/png;base64,${image.data.toString('base64')}`, alt=image.name)
+                div#next-arrow
+                    i(class='fas fa-chevron-right')
+            button(type='submit') Create Character
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js')
+    script.
+        // JavaScript code
+        const thumbnailImg = document.querySelectorAll('.thumbnail');
+        const thumbnails = document.querySelectorAll('.thumbnail img');
+        const prevArrow = document.getElementById('prev-arrow');
+        const nextArrow = document.getElementById('next-arrow');
+        const selectedImageInput = document.getElementById('selectedImage');
+        const albumForm = document.getElementById('albumForm');
+
+        let currentImageIndex = 0;
+        let selectedImageName = thumbnails[currentImageIndex].alt;
+
+        // Function to show the current image and hide the others
+        function showCurrentImage() {
+            thumbnails.forEach((thumbnail, index) => {
+                const displayStyle = index === currentImageIndex ? 'block' : 'none';
+                thumbnail.style.display = displayStyle;
+                if (displayStyle === 'block') {
+                    selectedImageName = thumbnail.alt; // Update the selected image name
+                    selectedImageInput.value = selectedImageName; // Update the input field with the selected image name
+                    console.log(selectedImageName);
+                }
+            });
+            thumbnailImg.forEach((thumbnail, index) => {
+                thumbnail.style.display = index === currentImageIndex ? 'block' : 'none';
+            });
+        }
+
+        // Function to handle next image click
+        function handleNextClick() {
+            currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
+            showCurrentImage();
+        }
+
+        // Function to handle previous image click
+        function handlePrevClick() {
+            currentImageIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
+            showCurrentImage();
+        }
+
+        // Add click event listeners to the arrows
+        prevArrow.addEventListener('click', handlePrevClick);
+        nextArrow.addEventListener('click', handleNextClick);
+
+        // Show the initial image
+        showCurrentImage();
+
+        // Add a submit event listener to the form
+        albumForm.addEventListener('submit', (event) => {
+            // Set the value of the selectedImageInput just before form submission
+            selectedImageInput.value = selectedImageName;
+        });

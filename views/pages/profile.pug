@@ -1,0 +1,55 @@
+extends ../layouts/base
+
+block css
+    link(rel='stylesheet', href='/CSS/log.css')
+    link(rel='stylesheet', href='/CSS/main.css')
+block layout-content
+    a.return-button(href='/dashboard') &#8592; Return
+    .container-wrapper
+        .container
+            .align-horizontaly
+                div
+                    .character-container
+                        img(src=imgUrl, alt='Image Description')
+                div
+                    p Compte : #{username}
+                    p Pseudo : #{name}
+                    // Show the password change form when the button is clicked
+                    button#showPasswordForm(type="button") Change Password
+
+                    // Password change form (initially hidden)
+
+                    div.form-container(style="display:none;")
+                        form#passwordForm(action="/profile", method="POST")
+                            label(for="currentPassword") Current Password:
+                            input(type="password", name="currentPassword", id="currentPassword" required)
+                            label(for="newPassword") New Password:
+                            input(type="password", name="newPassword", id="newPassword" required)
+                            label(for="confirmPassword") Confirm New Password:
+                            input(type="password", name="confirmPassword", id="confirmPassword" required)
+                            button(type="submit") Change Password
+
+                        button.close-button(type="button") ×
+
+                    div
+                        form(action=`/delete-character/${userId}`, method="POST", onsubmit="return confirmDelete();")
+                            button.delete-character-button(type="submit") Delete Character
+    script.
+        const showPasswordFormButton = document.getElementById('showPasswordForm');
+        const formContainer = document.querySelector('.form-container');
+
+        showPasswordFormButton.addEventListener('click', () => {
+            showPasswordFormButton.style.display = 'none';
+            formContainer.style.display = 'flex';
+        });
+
+        const closeButton = document.querySelector('.close-button');
+
+        closeButton.addEventListener('click', () => {
+            showPasswordFormButton.style.display = 'block';
+            formContainer.style.display = 'none';
+        });
+
+        function confirmDelete() {
+            return confirm("Are you sure you want to delete your character?");
+        }

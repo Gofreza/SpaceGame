@@ -1,0 +1,50 @@
+extends ../layouts/base
+
+block css
+    link(rel='stylesheet', href='/CSS/main.css')
+block layout-content
+    .container-main
+        .planet-container
+            .moon
+        .content
+            .profil-info
+                p #{name} [ Level : #{level} | Combat : #{combat_stat} | Industry : #{industry_stat} | Technology : #{technology_stat} ]
+            .align-horizontaly
+                div
+                    .character-container
+                        img(src=imgUrl, alt='Image Description')
+                    .character-name
+                        p
+                            a(href="/profile") Account
+                div
+                    .buttons
+                        button(class="button" onclick="window.location.href='/planet-menu'") Planet
+                        button(class="button") Army
+                        button(class="button") Star Map
+                div
+                    .resources
+                        table
+                            tr
+                                td Iron :
+                                td #{resources.iron}
+                            tr
+                                td Steel :
+                                td #{resources.steel}
+                            tr
+                                td Copper :
+                                td #{resources.copper}
+                            tr
+                                td Component :
+                                td #{resources.components}
+                            tr
+                                td Petrol :
+                                td #{resources.petrol}
+                            tr
+                                td Plastic :
+                                td #{resources.plastic}
+                            tr
+                                td Money :
+                                td #{resources.money}
+                            tr
+                                td Crystal :
+                                td #{resources.crystal}

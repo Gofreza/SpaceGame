@@ -1,0 +1,83 @@
+extends ../../layouts/base
+
+block css
+    link(rel='stylesheet', href='/CSS/base.css')
+block layout-content
+    .container-base
+        .circle-container
+            //Items
+            //Center Item
+            each item in centerItem
+                .center-item
+                    .pointer-cursor(onclick=`showInfo(${item.index})`)
+                        img(src=`${item.src}` alt=`${item.name}`)
+                        .caption= item.name
+            //Circles Items
+            each item in circleItems
+                .circle-item
+                    .pointer-cursor(onclick=`showInfo(${item.index})`)
+                        img(src=`${item.src}` alt=`${item.name}`)
+                        .caption= item.name
+            //Info Box
+            each item in circleItems
+                .info-box(id='info-' + item.index)
+                    .info-content
+                        span.close-button(onclick=`hideInfo(${item.index})`) &times;
+                        h2= item.name + " Level : " + item.level
+                        p= item.info
+                        p Cost to Level Up:
+                        - if (item.costToLevelUp)
+                            ul
+                                each costs, title in item.costToLevelUp
+                                    li
+                                        span= title + ": " + `${costs}`
+                        - else
+                            p No cost information available.
+                        button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
+
+                each item in centerItem
+                    .info-box(id='info-' + item.index)
+                        .info-content
+                            span.close-button(onclick=`hideInfo(${item.index})`) &times;
+                            h2= item.name + " Level : " + item.level
+                            p= item.info
+                            p Cost to Level Up:
+                            - if (item.costToLevelUp)
+                                ul
+                                    each costs, title in item.costToLevelUp
+                                        li
+                                            span= title + ": " + `${costs}`
+                            - else
+                                p No cost information available.
+                            button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
+        .resources
+            table
+                tr
+                    td Iron :
+                    td #{resources.iron}
+                tr
+                    td Steel :
+                    td #{resources.steel}
+                tr
+                    td Copper :
+                    td #{resources.copper}
+                tr
+                    td Component :
+                    td #{resources.components}
+                tr
+                    td Petrol :
+                    td #{resources.petrol}
+                tr
+                    td Plastic :
+                    td #{resources.plastic}
+                tr
+                    td Money :
+                    td #{resources.money}
+                tr
+                    td Crystal :
+                    td #{resources.crystal}
+
+    script(src="/JS/base.js")
+    script(src="/JS/infobox.js")
+
+

@@ -1,0 +1,130 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    background-color: #060810;
+    background-image: url("/imgs/spacebackground.jpg");
+    background-size: cover;
+    background-position: center;
+    color: whitesmoke;
+}
+
+.planet-container {
+    display: flex;
+    padding: 40px;
+    background-color: #060810;
+    border: solid 1px white;
+    justify-content: center;
+    align-items: center;
+}
+
+.planet {
+    width: 200px;
+    height: 200px;
+    background: url('/imgs/planets-textures/2k_eris_fictional.jpg') center/cover;
+    border-radius: 50%;
+    box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.5), inset 0 0 10px 5px rgba(0, 0, 0, 0.5);
+}
+
+.moon {
+    width: 100px;
+    height: 100px;
+    background: url('/imgs/planets-textures/2k_eris_fictional.jpg') center/cover;
+    border-radius: 50%;
+    box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.5), inset 0 0 10px 5px rgba(0, 0, 0, 0.5);
+}
+
+/*
+    CHARACTER GESTION
+ */
+
+.character-container{
+    padding: 5px;
+    width: 100px;
+    height: 150px;
+    background-color: #060810;
+    border: solid 1px white;
+}
+
+.character-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Make the image cover the container */
+    max-width: 200px; /* Set a maximum width for the image */
+}
+
+.character-name {
+    display: block;
+    width: 100px;
+    height: 20px;
+    background-color: #060810;
+    border: solid 1px white;
+    overflow: hidden;
+}
+
+.character-name p {
+    text-align: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.character-name a:link, .character-name a:visited {
+    color: white;
+}
+
+/*
+    Things
+ */
+
+.profil-info {
+    width: 100%;
+    padding: 5px;
+    border: solid 1px white;
+}
+
+.container-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+}
+
+.content {
+    flex: 1;
+    background-color: #060810;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: solid 1px white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.align-horizontaly {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: normal;
+}
+.button {
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}

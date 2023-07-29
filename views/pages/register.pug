@@ -1,0 +1,16 @@
+extends ../layouts/base
+
+block css
+    link(rel='stylesheet', href='/CSS/log.css')
+block layout-content
+    a.return-button(href='/') &#8592; Return
+    div.container
+        h1 Register
+        form(action='/register', method='POST')
+            label(for='username') Username:
+            input(type='text', name='username', id='username', required)
+
+            label(for='password') Password:
+            input(type='password', name='password', id='password', required)
+
+            button(type='submit') Register
