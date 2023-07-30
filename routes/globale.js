@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {requireAuth, requireNotAuth, levelUpBuilding, levelUpMine} = require('../functions')
+const {requireAuth, requireNotAuth, levelUpBuilding, levelUpMine, showBuildingPage} = require('../functions')
 
 const database = require('../database')
 const db = database()
@@ -226,6 +226,32 @@ router.post('/level-up-building/:type/:index', requireAuth,(req, res) => {
 
 });
 
+router.post('/building-page/:index', requireAuth, (req, res) => {
+    const index = parseInt(req.params.index);
+    const flashMessages = req.flash(); // Retrieve flash messages from the session
+    let title;
+
+    switch (index) {
+        case 0: title = "Life Support System"; break;
+        case 1: title = "HQ"; break;
+        case 2: title = "Housing Module"; break;
+        case 3: title = "Commercial Hub"; break;
+        case 4: title = "Space Hangar"; break;
+        case 5: title = "Space Yard"; break;
+        case 6: title = "Storage Room"; break;
+        case 7: title = "Smelting Facility"; break;
+        case 8: title = "Workshop"; break;
+        default: title = "Error"; break;
+    }
+
+    res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
+        title: title,
+        flash: flashMessages,
+        index: index,
+        showMenuBar: true
+    });
+})
+
 router.get('/planet', requireAuth, (req, res) => {
     const flashMessages = req.flash(); // Retrieve flash messages from the session
 
@@ -274,7 +300,7 @@ router.get('/planet', requireAuth, (req, res) => {
                             return;
                         }
 
-                        console.log(mineData)
+                        //console.log(mineData)
 
                         const mineInfo = {
                             index: mineData.mine_index,

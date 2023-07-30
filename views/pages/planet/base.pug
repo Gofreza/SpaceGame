@@ -33,7 +33,9 @@ block layout-content
                                         span= title + ": " + `${costs}`
                         - else
                             p No cost information available.
-                        button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
+                        .buttons
+                            button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
+                            button(type="button" id=`buildingButton${item.index}` class="building-button" data-index=item.index) Building
 
                 each item in centerItem
                     .info-box(id='info-' + item.index)
@@ -49,7 +51,10 @@ block layout-content
                                             span= title + ": " + `${costs}`
                             - else
                                 p No cost information available.
-                            button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
+                            .buttons
+                                button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
+                                button(type="button" id=`buildingButton${item.index}` class="building-button" data-index=item.index) Building
+
         .resources
             table
                 tr

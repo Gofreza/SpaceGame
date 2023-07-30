@@ -62,3 +62,9 @@ html {
     border: 1px solid white;
 }
 
+.buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    justify-content: normal;
+}

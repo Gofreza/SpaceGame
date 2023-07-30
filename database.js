@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
+const util = require('util');
 
 function setupDatabase() {
     const db = new sqlite3.Database('./database/database.db');
@@ -561,6 +562,60 @@ function setupDatabase() {
         });
     }
 
+    function dbGetAsync(db, sql, params) {
+        return new Promise((resolve, reject) => {
+            db.get(sql, params, (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+            });
+        });
+    }
+
+    async function canUpdateBuilding(userId, level) {
+        try {
+            const character = await new Promise((resolve, reject) => {
+                findCharacterByUserId(userId, (err, row) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+
+            if (!character) {
+                console.log('deleteCharacter : Character not found.');
+                return false;
+            }
+
+            const sql = `SELECT level FROM character_buildings WHERE character_id = ? AND building_id = 1`;
+
+            const life_support_level = await dbGetAsync(db, sql, [character.id]);
+
+            //console.log(character.id);
+            //console.log(life_support_level);
+
+            return life_support_level.level > level;
+
+        } catch (err) {
+            console.error('Error finding character or querying database:', err.message);
+            return false;
+        }
+    }
+
+
+    async function updateBuildingLevel(characterId, buildingId, newLevel) {
+        try {
+            const sql = `UPDATE character_buildings SET level = ? WHERE character_id = ? AND building_id = ?`;
+            await db.run(sql, [newLevel, characterId, buildingId]);
+            console.log(`Building with ID ${buildingId} for character with ID ${characterId} updated to level ${newLevel}.`);
+            return true; // Return true if the update was successful
+        } catch (err) {
+            console.error('Error updating building level:', err);
+            return false; // Return false if there was an error updating the level
+        }
+    }
+
     /*
         MINES FUNCTIONS
      */
@@ -611,6 +666,18 @@ function setupDatabase() {
 
             callback(null, levelUpCostData);
         });
+    }
+
+    async function updateMineLevel(characterId, mineId, newLevel) {
+        try {
+            const sql = `UPDATE character_mines SET level = ? WHERE character_id = ? AND mine_id = ?`;
+            await db.run(sql, [newLevel, characterId, mineId]);
+            console.log(`Building with ID ${mineId} for character with ID ${characterId} updated to level ${newLevel}.`);
+            return true; // Return true if the update was successful
+        } catch (err) {
+            console.error('Error updating building level:', err);
+            return false; // Return false if there was an error updating the level
+        }
     }
 
     /*
@@ -788,30 +855,6 @@ function setupDatabase() {
         });
     }
 
-    async function updateBuildingLevel(characterId, buildingId, newLevel) {
-        try {
-            const sql = `UPDATE character_buildings SET level = ? WHERE character_id = ? AND building_id = ?`;
-            await db.run(sql, [newLevel, characterId, buildingId]);
-            console.log(`Building with ID ${buildingId} for character with ID ${characterId} updated to level ${newLevel}.`);
-            return true; // Return true if the update was successful
-        } catch (err) {
-            console.error('Error updating building level:', err);
-            return false; // Return false if there was an error updating the level
-        }
-    }
-
-    async function updateMineLevel(characterId, mineId, newLevel) {
-        try {
-            const sql = `UPDATE character_mines SET level = ? WHERE character_id = ? AND mine_id = ?`;
-            await db.run(sql, [newLevel, characterId, mineId]);
-            console.log(`Building with ID ${mineId} for character with ID ${characterId} updated to level ${newLevel}.`);
-            return true; // Return true if the update was successful
-        } catch (err) {
-            console.error('Error updating building level:', err);
-            return false; // Return false if there was an error updating the level
-        }
-    }
-
     /*  =======================
         BUILDING CHARACTERISTIC
         ======================= */
@@ -867,6 +910,7 @@ function setupDatabase() {
         getCharacterAttributesByUserId,
         hasCharacter,
         getBuildingLevelUpCost,
+        canUpdateBuilding,
         getBuildingData,
         getCharacterBuildingInfo,
         addOrUpdateResourcesForCharacter,

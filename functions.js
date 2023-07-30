@@ -49,7 +49,9 @@ function requireNoCharacter(req, res, next) {
 }
 
 // Be prepare it's a lot to digest
-function levelUpBuilding(index, req, res) {
+async function levelUpBuilding(index, req, res) {
+
+    let responseData = {};
 
     db.findCharacterByUserId(req.session.userId, (err, character) => {
         if (err) {
@@ -64,7 +66,7 @@ function levelUpBuilding(index, req, res) {
             return;
         }
 
-        db.getCharacterBuildingInfo(character.id, (err, characterBuildings) => {
+        db.getCharacterBuildingInfo(character.id, async (err, characterBuildings) => {
             if (err) {
                 console.error('Error fetching character buildings:', err.message);
                 res.redirect('/'); // Handle the error as needed, redirecting to the appropriate page
@@ -77,78 +79,90 @@ function levelUpBuilding(index, req, res) {
                 const buildingId = characterBuilding.building_id;
                 const level = characterBuilding.level;
 
-                if(buildingId === (parseInt(index) + 1)){
+                const canUpdate = await db.canUpdateBuilding(req.session.userId, level);
 
-                    // Get the level-up cost data for the building
-                    db.getBuildingLevelUpCost(buildingId, level, (err, levelUpCostData) => {
-                        if (err) {
-                            console.error('Error fetching level-up cost data:', err.message);
-                            return;
-                        }
+                if (buildingId === (parseInt(index) + 1)) {
 
-                        db.getResourcesForCharacter(req.session.userId, (err, resources) => {
+                    if (canUpdate) {
+
+                        // Get the level-up cost data for the building
+                        db.getBuildingLevelUpCost(buildingId, level, (err, levelUpCostData) => {
                             if (err) {
-                                // Handle error
-                            } else {
-                                if (resources === null) {
-                                    console.log('Character resources not found.');
+                                console.error('Error fetching level-up cost data:', err.message);
+                                return;
+                            }
+
+                            db.getResourcesForCharacter(req.session.userId, (err, resources) => {
+                                if (err) {
+                                    // Handle error
                                 } else {
-                                    console.log('Resources for character:', resources);
+                                    if (resources === null) {
+                                        console.log('Character resources not found.');
+                                    } else {
+                                        console.log('Resources for character:', resources);
 
-                                    //Yeah he got enough
-                                    if(resources.steel >= levelUpCostData.steel && resources.components >= levelUpCostData.components
-                                        && resources.plastic >= levelUpCostData.plastic && resources.money >= levelUpCostData.money){
+                                        //Yeah he got enough
+                                        if (resources.steel >= levelUpCostData.steel && resources.components >= levelUpCostData.components
+                                            && resources.plastic >= levelUpCostData.plastic && resources.money >= levelUpCostData.money) {
 
-                                        db.updateBuildingLevel(character.id, buildingId, level+1)
-                                            .then((result) => {
-                                                if (result) {
-                                                    // Update was successful
-                                                    console.log('Building level updated successfully.');
-                                                    // You can perform additional actions here if needed
+                                            db.updateBuildingLevel(character.id, buildingId, level + 1)
+                                                .then((result) => {
+                                                    if (result) {
+                                                        // Update was successful
+                                                        console.log('Building level updated successfully.');
+                                                        // You can perform additional actions here if needed
 
-                                                    const newresources = {
-                                                        iron: resources.iron,
-                                                        steel: resources.steel - levelUpCostData.steel,
-                                                        copper: resources.copper,
-                                                        components: resources.components - levelUpCostData.components,
-                                                        petrol: resources.petrol,
-                                                        plastic: resources.plastic - levelUpCostData.plastic,
-                                                        money: resources.money - levelUpCostData.money,
-                                                        crystal:resources.crystal
-                                                    }
-
-                                                    db.addOrUpdateResourcesForCharacter(character.id, newresources, (err) => {
-
-                                                        if(err){
-                                                            console.log("addOrUpdateResourcesForCharacter : error add resources")
+                                                        const newresources = {
+                                                            iron: resources.iron,
+                                                            steel: resources.steel - levelUpCostData.steel,
+                                                            copper: resources.copper,
+                                                            components: resources.components - levelUpCostData.components,
+                                                            petrol: resources.petrol,
+                                                            plastic: resources.plastic - levelUpCostData.plastic,
+                                                            money: resources.money - levelUpCostData.money,
+                                                            crystal: resources.crystal
                                                         }
 
-                                                        console.log("Level up !")
-                                                        res.json({ reloadPage: true });
+                                                        db.addOrUpdateResourcesForCharacter(character.id, newresources, (err) => {
 
-                                                    })
+                                                            if (err) {
+                                                                console.log("addOrUpdateResourcesForCharacter : error add resources")
+                                                            }
 
-                                                } else {
-                                                    // There was an error updating the level
-                                                    console.log('Failed to update building level.');
-                                                }
-                                            })
-                                            .catch((err) => {
-                                                console.error('Error:', err);
-                                            });
+                                                            //console.log("Level up !")
+                                                            responseData.reloadPage = true;
+                                                            responseData.flashMessage = "Level up Success!";
+
+                                                        })
+
+                                                    } else {
+                                                        // There was an error updating the level
+                                                        console.log('Failed to update building level.');
+                                                    }
+                                                })
+                                                .catch((err) => {
+                                                    console.error('Error:', err);
+                                                });
+
+                                        }
 
                                     }
-
                                 }
-                            }
+                            });
+
                         });
-
-                    });
-
+                    } else {
+                        req.flash("Error, Life Support Module level not high enough !")
+                        responseData.reloadPage = false;
+                        responseData.flashMessage = "Error, Life Support Module level not high enough !";
+                    }
+                    res.json(responseData);
                 }
+
             }
         });
     });
+
 }
 
 function levelUpMine(index, req, res) {
@@ -252,6 +266,7 @@ function levelUpMine(index, req, res) {
         });
     });
 }
+
 
 module.exports = {
     requireAuth,
