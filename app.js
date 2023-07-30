@@ -27,7 +27,8 @@ app.use(flash());
 const authRoutes = require('./routes/auth');
 const globalRoutes = require('./routes/globale')
 const createCharacterRoute = require('./routes/characters')
-app.use(authRoutes, globalRoutes, createCharacterRoute);
+const apiRoute = require('./routes/api')
+app.use(authRoutes, globalRoutes, createCharacterRoute, apiRoute);
 
 //Start the server
 app.listen(port, hostname, () => {

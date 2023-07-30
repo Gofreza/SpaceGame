@@ -80,7 +80,7 @@ router.post('/login', requireNotAuth, (req, res) => {
                         }
 
                         // Call updateResources for the logged-in user after successful login
-                        updateResources(req.session.userId, character.id)
+                        //updateResources(req.session.userId, character.id)
                             //.then(r => console.log("--Update Resources--")); // Trigger initial resource update
 
                         // Start the interval to update resources every second

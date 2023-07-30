@@ -102,18 +102,31 @@ function setupDatabase() {
     FOREIGN KEY (mines_id) REFERENCES mines (id)
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS character_resources (
+    db.run(`CREATE TABLE IF NOT EXISTS character_resources2 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character_id INTEGER,
     iron INTEGER,
     steel INTEGER,
     copper INTEGER,
     components INTEGER,
-    petrol INTEGER,
+    petrol FLOAT,
     plastic INTEGER,
     money INTEGER,
-    crystal INTEGER,
+    crystal FLOAT,
     FOREIGN KEY (character_id) REFERENCES characters(id)
+    );`)
+
+    db.run(`CREATE TABLE IF NOT EXISTS building_characteristics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    building_id INTEGER,
+    level INTEGER,
+    production_bonus FLOAT,
+    storage_capacity INTEGER,
+    population_capacity INTEGER,
+    mission_count INTEGER,
+    ship_capacity INTEGER,
+    unlocked_ships TEXT,
+    FOREIGN KEY (building_id) REFERENCES buildings (id)
     );`)
 
     /*
@@ -189,7 +202,7 @@ function setupDatabase() {
 
     async function isIntegerOrFloat(value) {
         const parsedValue = parseFloat(value);
-        return Number.isInteger(parsedValue) ? parsedValue : parsedValue.toFixed(2);
+        return Number.isInteger(parsedValue) ? parsedValue : parsedValue.toFixed(1);
     }
 
     /*
@@ -380,7 +393,7 @@ function setupDatabase() {
                 return callback(null, null);
             }
 
-            console.log('Character found:', row);
+            //console.log('Character found:', row);
             callback(null, row);
         });
     }
@@ -655,66 +668,81 @@ function setupDatabase() {
     }
 
     //Update resources auto
+    let fractionalResources = {
+        iron: 0,
+        copper: 0,
+        petrol: 0,
+        crystal: 0
+    };
+
     async function updateCharacterResources(userId, characterId, resourcesToAdd, mineId) {
 
         const updatedResources = await isIntegerOrFloat(resourcesToAdd);
 
-        await getResourcesForCharacter(userId, async (err, resources) => {
-             if (err) {
-                 // Handle error
-             } else {
-                 if (resources === null) {
-                     console.log('Character resources not found.');
-                 } else {
-                     //console.log('Resources for character:', resources);
-                     if (mineId === 1) {
-                         const updateSql = `UPDATE character_resources SET iron = iron + ? WHERE character_id = ?`
-                         await db.run(updateSql, [updatedResources, characterId], (err) => {
-                             if (err) {
-                                 console.error('Error updating resources:', err.message);
-                             } else {
-                                 //console.log('Resources updated successfully.');
-                             }
-                         });
-                     }
-                     else if (mineId === 2) {
-                         const updateSql = `UPDATE character_resources SET copper = copper + ? WHERE character_id = ?`
-                         await db.run(updateSql, [updatedResources, characterId], (err) => {
-                             if (err) {
-                                 console.error('Error updating resources:', err.message);
-                             } else {
-                                 //console.log('Resources updated successfully.');
-                             }
-                         });
-                     }
-                     else if (mineId === 3) {
-                         const updateSql = `UPDATE character_resources SET petrol = petrol + ? WHERE character_id = ?`
-                         await db.run(updateSql, [updatedResources, characterId], (err) => {
-                             if (err) {
-                                 console.error('Error updating resources:', err.message);
-                             } else {
-                                 //console.log('Resources updated successfully.');
-                             }
-                         });
-                     }
-                     else if (mineId === 4) {
-                         const updateSql = `UPDATE character_resources SET crystal = crystal + ? WHERE character_id = ?`
-                         await db.run(updateSql, [updatedResources, characterId], (err) => {
-                             if (err) {
-                                 console.error('Error updating resources:', err.message);
-                             } else {
-                                 //console.log('Resources updated successfully.');
-                             }
-                         });
-                     }
-                     else {
-                         console.log('updateCharacterResources : no mine_id.');
-                     }
+        await getCharacteristics(userId, 7, async (err, characteristics) => {
+            if (err) {
+                console.log("updateCharacterResources : Error characteristics not found")
+            } else {
+                //console.log("Characterisrics : ", characteristics)
+                const maxCapacity = characteristics.storage_capacity
 
-                 }
-             }
+                await getResourcesForCharacter(userId, async (err, resources) => {
+                    if (err) {
+                        console.log("updateCharacterResources : Error resources")
+                    } else {
+                        if (resources === null) {
+                            console.log('Character resources not found.');
+                        } else {
+                            //console.log('Resources for character:', resources);
+
+                            if (mineId === 1) {
+                                if (resources.iron < maxCapacity) {
+                                    fractionalResources.iron += updatedResources;
+                                }
+                            } else if (mineId === 2) {
+                                if (resources.copper < maxCapacity) {
+                                    fractionalResources.copper += updatedResources;
+                                }
+                            } else if (mineId === 3) {
+                                if (resources.petrol < maxCapacity) {
+                                    fractionalResources.petrol += parseFloat(updatedResources);
+                                }
+                            } else if (mineId === 4) {
+                                if (resources.crystal < maxCapacity) {
+                                    fractionalResources.crystal += parseFloat(updatedResources);
+                                }
+                            }
+
+                            //console.log("F:", fractionalResources)
+
+                            for (const resource in fractionalResources) {
+                                const value = fractionalResources[resource];
+                                const wholePart = Math.floor(value);
+                                if (wholePart > 0) {
+                                    // Update the database with the whole number part
+                                    await updateResourceInDatabase(resource, wholePart, characterId);
+                                    // Subtract the whole number part from the accumulated value
+                                    fractionalResources[resource] -= wholePart;
+                                }
+                            }
+
+                        }
+                    }
+                });
+            }
+        })
+
+    }
+
+    async function updateResourceInDatabase(resource, value, characterId) {
+        const updateSql = `UPDATE character_resources SET ${resource} = ${resource} + ? WHERE character_id = ?`;
+        await db.run(updateSql, [value, characterId], (err) => {
+            if (err) {
+                console.error('Error updating resources:', err.message);
+            } else {
+                //console.log('Resources updated successfully.');
+            }
         });
-
     }
 
     // Function to retrieve the amount of resources for a character
@@ -730,8 +758,8 @@ function setupDatabase() {
             });
         });
 
-        console.log("HERE");
-        console.log(character);
+        //console.log("HERE");
+        //console.log(character);
 
         const sql = `SELECT * FROM character_resources WHERE character_id = ?`;
 
@@ -784,6 +812,51 @@ function setupDatabase() {
         }
     }
 
+    /*  =======================
+        BUILDING CHARACTERISTIC
+        ======================= */
+
+    async function getCharacteristics(userId, buildingId, callback) {
+        const character = await new Promise((resolve, reject) => {
+            findCharacterByUserId(userId, (err, row) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+
+        const sql = `SELECT level FROM character_buildings WHERE character_id = ? AND building_id = ?`
+
+        await db.get(sql, [character.id, buildingId], async (err, level) => {
+            if (err) {
+                console.error('Error fetching building data:', err.message);
+                callback(err)
+            }
+
+            //console.log("ID : ", buildingId)
+            //console.log("Level : ", level.level)
+
+            const sql = `SELECT * FROM building_characteristics WHERE building_id = ? AND level = ?`
+
+            await db.get(sql, [buildingId, level.level], (err, characteristics) => {
+                if (err) {
+                    console.error('Error retrieving characteristics:', err.message);
+                    callback(err, null);
+                } else {
+                    if (!characteristics) {
+                        console.log('Character characteristic not found.');
+                        callback(null, null);
+                    } else {
+                        callback(null, characteristics)
+                    }
+                }
+            })
+        })
+
+    }
+
     return {
         createUser,
         findUserByUsername,
@@ -803,7 +876,8 @@ function setupDatabase() {
         updateMineLevel,
         getCharacterMinesInfo,
         getMineData,
-        getMineLevelUpCost
+        getMineLevelUpCost,
+        getCharacteristics
     };
 }
 

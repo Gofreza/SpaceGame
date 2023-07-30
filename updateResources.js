@@ -1,13 +1,18 @@
 const database = require('./database')
 const db = database()
 
+function customRound(value, decimals) {
+    const factor = 10 ** decimals;
+    return Math.round(value * factor) / factor;
+}
+
 async function updateResources(userId, characterId) {
     try {
         db.getCharacterMinesInfo(characterId, async (err, characterMines) => {
 
             for (const mine of characterMines) {
 
-                console.log("Mine ID : ", mine.mine_id)
+                //console.log("Mine ID : ", mine.mine_id)
 
                 if (mine.mine_id === 1) {
                     // Determine the amount of resources to add based on the mine level
@@ -35,8 +40,8 @@ async function updateResources(userId, characterId) {
                     //console.log(`Resources updated for Petrol mine with ID ${mine.mine_id}`);
                 } else if (mine.mine_id === 4) {
                     // Determine the amount of resources to add based on the mine level
-                    // For example, if the mine level is 1, you can add 10 resources per second
-                    const resourcesToAdd = mine.level * 1 / 10;
+                    const resourcesToAdd = (mine.level * 1) / 10;
+                    //const updatedCrystal = customRound(resourcesToAdd, 2);
 
                     // Update the character's resources in the database
                     await db.updateCharacterResources(userId, characterId, resourcesToAdd, mine.mine_id);
