@@ -1,4 +1,194 @@
 extends ../../../layouts/base
 
+block css
+    link(rel='stylesheet', href='/CSS/buildings/buildings.css')
+    link(rel='stylesheet', href='/CSS/buildings/smelting.css')
 block layout-content
-    p Index : #{index}
+    .page-container
+        .smelting-container
+            .buttons
+                form(id=`startForm` action="/refining" method="POST")
+                    input(type="hidden" name="progress" value="start")
+                    button(type="button" id=`buttonStart`) Start All
+                form(id=`stopForm` action="/refining" method="POST")
+                    input(type="hidden" name="progress" value="stop")
+                    button(type="button" id=`buttonStop`) Stop All
+            .horizontal-container
+                each rate in smeltingRates
+                    - const resourceName = rate.resource.charAt(0).toUpperCase() + rate.resource.slice(1)
+                    - const resourceClass = rate.resource.toLowerCase()
+                    - let rawClass = (resourceClass === 'steel') ? 'iron' : (resourceClass === 'components') ? 'copper' : 'default';
+                    if ['steel', 'components'].includes(resourceClass)
+                        .box(class=resourceClass)
+                            p= resourceName
+                            p #{rate.raw_resource} #{rawClass} -> #{rate.process_resource} #{resourceName} &nbsp; in #{rate.process_speed}s
+                            .animated-gradient(id=`gradient${resourceName}`)
+                            .buttons
+                                form(id=`startForm${resourceName}` action="/refining" method="POST")
+                                    input(type="hidden" name="progress" value=`start${resourceName}`)
+                                    button(type="button" id=`buttonStart${resourceName}`) Start
+                                form(id=`stopForm${resourceName}` action="/refining" method="POST")
+                                    input(type="hidden" name="progress" value=`stop${resourceName}`)
+                                    button(type="button" id=`buttonStop${resourceName}`) Stop
+            each rate in smeltingRates
+                - const resourceName = rate.resource.charAt(0).toUpperCase() + rate.resource.slice(1)
+                - const resourceClass = rate.resource.toLowerCase()
+                - let rawClass = (resourceClass === 'plastic') ? 'petrol' : 'default';
+                if ['plastic'].includes(resourceClass)
+                    .box(class=resourceClass)
+                        p= resourceName
+                        p #{rate.raw_resource} #{rawClass} -> #{rate.process_resource} #{resourceName} &nbsp; in #{rate.process_speed}s
+                        .animated-gradient(id=`gradient${resourceName}`)
+                        .buttons
+                            form(id=`startForm${resourceName}` action="/refining" method="POST")
+                                input(type="hidden" name="progress" value=`start${resourceName}`)
+                                button(type="button" id=`buttonStart${resourceName}`) Start
+                            form(id=`stopForm${resourceName}` action="/refining" method="POST")
+                                input(type="hidden" name="progress" value=`stop${resourceName}`)
+                                button(type="button" id=`buttonStop${resourceName}`) Stop
+
+        .resources
+            table
+                tr
+                    td Iron :
+                    td#iron #{resources.iron}
+                tr
+                    td Steel :
+                    td#steel #{resources.steel}
+                tr
+                    td Copper :
+                    td#copper #{resources.copper}
+                tr
+                    td Component :
+                    td#components #{resources.components}
+                tr
+                    td Petrol :
+                    td#petrol #{resources.petrol}
+                tr
+                    td Plastic :
+                    td#plastic #{resources.plastic}
+                tr
+                    td Money :
+                    td#money #{resources.money}
+                tr
+                    td Crystal :
+                    td#crystal #{resources.crystal}
+    script(src="/JS/resources.js")
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add an event listener for the "Start" button
+            document.getElementById(`buttonStart`).addEventListener('click', (event) => {
+                document.getElementById(`startForm`).submit();
+            });
+            document.getElementById(`buttonStartSteel`).addEventListener('click', (event) => {
+                document.getElementById(`startFormSteel`).submit();
+            });
+            document.getElementById(`buttonStartComponents`).addEventListener('click', (event) => {
+                document.getElementById(`startFormComponents`).submit();
+            });
+            document.getElementById(`buttonStartPlastic`).addEventListener('click', (event) => {
+                document.getElementById(`startFormPlastic`).submit();
+            });
+
+            // Add an event listener for the "Stop" button
+            document.getElementById(`buttonStop`).addEventListener('click', (event) => {
+                document.getElementById(`stopForm`).submit();
+            });
+            document.getElementById(`buttonStopSteel`).addEventListener('click', (event) => {
+                document.getElementById(`stopFormSteel`).submit();
+            });
+            document.getElementById(`buttonStopComponents`).addEventListener('click', (event) => {
+                document.getElementById(`stopFormComponents`).submit();
+            });
+            document.getElementById(`buttonStopPlastic`).addEventListener('click', (event) => {
+                document.getElementById(`stopFormPlastic`).submit();
+            });
+        });
+    //Gradient a not changing with the reload
+    script.
+        const btnStopSteel = document.getElementById('buttonStopSteel');
+        const btnStopComponents = document.getElementById('buttonStopComponents');
+        const btnStopPlastic = document.getElementById('buttonStopPlastic');
+        const btnStartSteel = document.getElementById('buttonStartSteel');
+        const btnStartComponents = document.getElementById('buttonStartComponents');
+        const btnStartPlastic = document.getElementById('buttonStartPlastic');
+        const gradientBoxSteel = document.getElementById('gradientSteel');
+        const gradientBoxComponents = document.getElementById('gradientComponents');
+        const gradientBoxPlastic = document.getElementById('gradientPlastic');
+
+
+        // Event listener for the button click
+        btnStopSteel.addEventListener('click', () => {
+            // Toggle the 'stop-animation' class on the gradient box element
+            gradientBoxSteel.classList.toggle('stop-animation');
+
+            // If the 'stop-animation' class is present, add it again after a short delay to restart the animation
+            if (gradientBoxSteel.classList.contains('stop-animation')) {
+                setTimeout(() => {
+                    gradientBoxSteel.classList.add('stop-animation');
+                }, 100);
+            }
+        });
+
+        btnStopComponents.addEventListener('click', () => {
+            // Toggle the 'stop-animation' class on the gradient box element
+            gradientBoxComponents.classList.toggle('stop-animation');
+
+            // If the 'stop-animation' class is present, add it again after a short delay to restart the animation
+            if (gradientBoxComponents.classList.contains('stop-animation')) {
+                setTimeout(() => {
+                    gradientBoxComponents.classList.add('stop-animation');
+                }, 100);
+            }
+        });
+
+        btnStopPlastic.addEventListener('click', () => {
+            // Toggle the 'stop-animation' class on the gradient box element
+            gradientBoxPlastic.classList.toggle('stop-animation');
+
+            // If the 'stop-animation' class is present, add it again after a short delay to restart the animation
+            if (gradientBoxPlastic.classList.contains('stop-animation')) {
+                setTimeout(() => {
+                    gradientBoxPlastic.classList.add('stop-animation');
+                }, 100);
+            }
+        });
+
+        // Event listener for the button click
+        btnStartSteel.addEventListener('click', () => {
+            // Toggle the 'stop-animation' class on the gradient box element
+            gradientBoxSteel.classList.toggle('stop-animation');
+
+            // If the 'stop-animation' class is present, add it again after a short delay to restart the animation
+            if (gradientBoxSteel.classList.contains('stop-animation')) {
+                setTimeout(() => {
+                    gradientBoxSteel.classList.add('stop-animation');
+                }, 100);
+            }
+        });
+
+        btnStartComponents.addEventListener('click', () => {
+            // Toggle the 'stop-animation' class on the gradient box element
+            gradientBoxComponents.classList.toggle('stop-animation');
+
+            // If the 'stop-animation' class is present, add it again after a short delay to restart the animation
+            if (gradientBoxComponents.classList.contains('stop-animation')) {
+                setTimeout(() => {
+                    gradientBoxComponents.classList.add('stop-animation');
+                }, 100);
+            }
+        });
+
+        btnStartPlastic.addEventListener('click', () => {
+            // Toggle the 'stop-animation' class on the gradient box element
+            gradientBoxPlastic.classList.toggle('stop-animation');
+
+            // If the 'stop-animation' class is present, add it again after a short delay to restart the animation
+            if (gradientBoxPlastic.classList.contains('stop-animation')) {
+                setTimeout(() => {
+                    gradientBoxPlastic.classList.add('stop-animation');
+                }, 100);
+            }
+        });
+
+

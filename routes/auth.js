@@ -4,7 +4,7 @@ const router = express.Router();
 
 const database = require('../database')
 const {requireNotAuth} = require("../functions");
-const {updateResources} = require("../updateResources");
+const {updateResources, refineResources, stopRefining, refineSteel, refineComponents, refinePlastic, startRefining} = require("../updateResources");
 const db = database()
 
 // GET login page
@@ -79,17 +79,17 @@ router.post('/login', requireNotAuth, (req, res) => {
                             return;
                         }
 
-                        // Call updateResources for the logged-in user after successful login
-                        //updateResources(req.session.userId, character.id)
-                            //.then(r => console.log("--Update Resources--")); // Trigger initial resource update
+                        //startRefining(req.session.userId, character.id)
 
                         // Start the interval to update resources every second
                         // Update resources every second (1000 milliseconds)
                         // Save the interval ID in the session so you can clear it later
+
                         req.session.intervalId = setInterval(() => {
                             updateResources(req.session.userId, character.id)
                                 //.then(r => console.log("--Update Resources--"));
                         }, 1000);
+
                     })
 
                 } else {

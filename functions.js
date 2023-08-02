@@ -79,7 +79,7 @@ async function levelUpBuilding(index, req, res) {
                 const buildingId = characterBuilding.building_id;
                 const level = characterBuilding.level;
 
-                const canUpdate = await db.canUpdateBuilding(req.session.userId, level);
+                const canUpdate = await db.canUpdateBuilding(req.session.userId, level, characterBuilding.building_id);
 
                 if (buildingId === (parseInt(index) + 1)) {
 
@@ -132,6 +132,7 @@ async function levelUpBuilding(index, req, res) {
                                                             //console.log("Level up !")
                                                             responseData.reloadPage = true;
                                                             responseData.flashMessage = "Level up Success!";
+                                                            res.json(responseData);
 
                                                         })
 
@@ -145,6 +146,11 @@ async function levelUpBuilding(index, req, res) {
                                                 });
 
                                         }
+                                        else {
+                                            responseData.reloadPage = false;
+                                            responseData.flashMessage = "Not enough resources to level up !";
+                                            res.json(responseData);
+                                        }
 
                                     }
                                 }
@@ -155,8 +161,8 @@ async function levelUpBuilding(index, req, res) {
                         req.flash("Error, Life Support Module level not high enough !")
                         responseData.reloadPage = false;
                         responseData.flashMessage = "Error, Life Support Module level not high enough !";
+                        res.json(responseData);
                     }
-                    res.json(responseData);
                 }
 
             }

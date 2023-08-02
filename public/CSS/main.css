@@ -108,6 +108,14 @@ body {
     gap: 20px;
 }
 
+.refining {
+    padding: 5px;
+    width: 100px;
+    height: 100px;
+    background-color: rgba(6, 8, 16, 0.75);;
+    border: solid 2px white;
+}
+
 .align-horizontaly {
     display: flex;
     flex-direction: row;
@@ -128,3 +136,8 @@ body {
     border-radius: 4px;
     cursor: pointer;
 }
+
+p a {
+    margin-left: 5px;
+}
+

@@ -48,4 +48,24 @@ block layout-content
                             tr
                                 td Crystal :
                                 td#crystal #{resources.crystal}
+                .refining
+                    .buttons
+                        p Refining
+                            a(href="/building-page/7") &#x2192;
+                        form(id=`startForm` action="/refining" method="POST")
+                            input(type="hidden" name="progress" value="start")
+                            button(type="button" id=`buttonStart`) Start All
+                        form(id=`stopForm` action="/refining" method="POST")
+                            input(type="hidden" name="progress" value="stop")
+                            button(type="button" id=`buttonStop`) Stop All
+                .content
     script(src="/JS/resources.js")
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById(`buttonStart`).addEventListener('click', (event) => {
+                document.getElementById(`startForm`).submit();
+            });
+            document.getElementById(`buttonStop`).addEventListener('click', (event) => {
+                document.getElementById(`stopForm`).submit();
+            });
+        })

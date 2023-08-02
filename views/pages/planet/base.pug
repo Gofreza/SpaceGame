@@ -3,7 +3,7 @@ extends ../../layouts/base
 block css
     link(rel='stylesheet', href='/CSS/base.css')
 block layout-content
-    .container-base
+    .page-container
         .circle-container
             //Items
             //Center Item
@@ -35,8 +35,10 @@ block layout-content
                             p No cost information available.
                         .buttons
                             button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
-                            button(type="button" id=`buildingButton${item.index}` class="building-button" data-index=item.index) Building
-
+                            form(action="/building-page" method="POST")
+                                // Add a hidden input field to hold the index
+                                input(type="hidden" name="index" value=item.index)
+                                button(type="submit") Building
                 each item in centerItem
                     .info-box(id='info-' + item.index)
                         .info-content
@@ -53,8 +55,10 @@ block layout-content
                                 p No cost information available.
                             .buttons
                                 button(type="button" id=`levelUpButton${item.index}` class="level-up-button" data-index=item.index data-type="base") Level Up
-                                button(type="button" id=`buildingButton${item.index}` class="building-button" data-index=item.index) Building
-
+                                form(action="/building-page" method="POST")
+                                    // Add a hidden input field to hold the index
+                                    input(type="hidden" name="index" value=item.index)
+                                    button(type="submit") Building
         .resources
             table
                 tr

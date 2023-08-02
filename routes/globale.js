@@ -3,6 +3,9 @@ const router = express.Router();
 const {requireAuth, requireNotAuth, levelUpBuilding, levelUpMine, showBuildingPage} = require('../functions')
 
 const database = require('../database')
+const {startRefining, stopRefining, startRefiningSteel, startRefiningComponents, startRefiningPlastic,
+    stopRefiningSteel, stopRefiningComponents
+} = require("../updateResources");
 const db = database()
 
 router.get('/dashboard', requireAuth, async (req, res) => {
@@ -226,11 +229,11 @@ router.post('/level-up-building/:type/:index', requireAuth,(req, res) => {
 
 });
 
-router.post('/building-page/:index', requireAuth, (req, res) => {
-    const index = parseInt(req.params.index);
+router.get('/building-page/:index', requireAuth, (req, res) => {
     const flashMessages = req.flash(); // Retrieve flash messages from the session
-    let title;
+    const index = parseInt(req.params.index);
 
+    let title;
     switch (index) {
         case 0: title = "Life Support System"; break;
         case 1: title = "HQ"; break;
@@ -244,13 +247,126 @@ router.post('/building-page/:index', requireAuth, (req, res) => {
         default: title = "Error"; break;
     }
 
-    res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
-        title: title,
-        flash: flashMessages,
-        index: index,
-        showMenuBar: true
+    db.getResourcesForCharacter(req.session.userId, async (err, resources) => {
+        if (err) {
+            // Handle error
+        } else {
+            if (resources === null) {
+                console.log('Character resources not found.');
+            } else {
+
+                const character = await new Promise((resolve, reject) => {
+                    db.findCharacterByUserId(req.session.userId, (err, row) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(row);
+                        }
+                    });
+                });
+
+                let smeltingRates = [];
+
+                if (index === 7) {
+
+                    const buildingsData = await new Promise((resolve, reject) => {
+                        db.getCharacterBuildingInfo(character.id, (err, level) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(level);
+                            }
+                        });
+                    });
+
+                    //console.log(buildingsData)
+                    const smeltingData = buildingsData.find(building => building.building_id === index + 1);
+                    //console.log(smeltingData.level)
+                    const level = smeltingData.level
+
+                    let resources = ["steel", "components", "plastic"];
+
+                    for (let resource of resources) { // Use 'of' instead of 'in' to iterate over values
+                        const res = await new Promise((resolve, reject) => {
+                            db.getSmeltingRates(resource, level, (err, row) => {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve(row);
+                                }
+                            });
+                        });
+
+                        smeltingRates.push(res); // Push 'res' into the 'result' array
+                    }
+
+                }
+
+                //console.log(smeltingRates)
+
+                res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
+                    title: title,
+                    flash: flashMessages,
+                    index: index,
+                    resources: resources,
+                    smeltingRates: smeltingRates,
+                    showMenuBar: true
+                });
+            }
+        }
     });
-})
+});
+
+// POST route to handle form submission and redirect to building page
+router.post('/building-page', requireAuth, (req, res) => {
+    // Parse the index from the form submission
+    const index = parseInt(req.body.index);
+
+    // Redirect to the corresponding building page using the GET route
+    res.redirect(`/building-page/${index}`);
+});
+
+router.post('/refining', requireAuth, async (req, res) => {
+    const progress = req.body.progress;
+    const character = await new Promise((resolve, reject) => {
+        db.findCharacterByUserId(req.session.userId, (err, row) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+
+    const userId = req.session.userId;
+    const characterID = character.id
+
+    if (progress === "start") {
+        startRefining(userId, characterID);
+    } else if (progress === "startSteel") {
+        startRefiningSteel(userId, characterID)
+    } else if (progress === "startComponents") {
+        startRefiningComponents(userId, characterID)
+    } else if (progress === "startPlastic") {
+        startRefiningPlastic(userId, characterID)
+    } else if (progress === "stopSteel") {
+        stopRefiningSteel()
+    } else if (progress === "stopComponents") {
+        stopRefiningComponents()
+    } else if (progress === "stopPlastic") {
+        stopRefining()
+    } else {
+        stopRefining();
+    }
+
+    const referer = req.headers.referer;
+    if (referer) {
+        res.redirect(referer);
+    } else {
+        // If the referer is not available, redirect to a default page
+        res.redirect('/dashboard');
+    }
+});
 
 router.get('/planet', requireAuth, (req, res) => {
     const flashMessages = req.flash(); // Retrieve flash messages from the session

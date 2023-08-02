@@ -103,7 +103,7 @@ function setupDatabase() {
     FOREIGN KEY (mines_id) REFERENCES mines (id)
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS character_resources2 (
+    /*db.run(`CREATE TABLE IF NOT EXISTS character_resources2 (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     character_id INTEGER,
     iron INTEGER,
@@ -116,6 +116,7 @@ function setupDatabase() {
     crystal FLOAT,
     FOREIGN KEY (character_id) REFERENCES characters(id)
     );`)
+     */
 
     db.run(`CREATE TABLE IF NOT EXISTS building_characteristics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,6 +129,15 @@ function setupDatabase() {
     ship_capacity INTEGER,
     unlocked_ships TEXT,
     FOREIGN KEY (building_id) REFERENCES buildings (id)
+    );`)
+
+    db.run(`CREATE TABLE IF NOT EXISTS smelting_conversion_rate (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    resource TEXT,
+    level INTEGER,
+    raw_resource INTEGER,
+    process_resource INTEGER,
+    process_speed INTEGER
     );`)
 
     /*
@@ -165,7 +175,7 @@ function setupDatabase() {
 /*
     db.run(`INSERT INTO buildings (name, img_src, building_index, description)
             VALUES ("Life Support System", "/imgs/base/life_support_room.png", 0, "A Life Support System"),
-                   ("HQ", "/imgs/base/hq_room.png", 1, "The base HQ"), 
+                   ("HQ", "/imgs/base/hq_room.png", 1, "The base HQ"),
                    ("Housing Module", "/imgs/base/housing_module.png", 2, "The habitation zone, increase the population cap."),
                    ("Commercial Hub", "/imgs/base/commercial_hub.png", 3, "The commercial Hub"),
                    ("Space Hangar", "/imgs/base/space_hangar.png", 4, "The Space Hangar"),
@@ -177,7 +187,7 @@ function setupDatabase() {
 
     db.run(`INSERT INTO mines (name, img_src, building_index, description)
             VALUES ("Iron Mine", "/imgs/mine/iron_mine.png", 0, "An iron mine."),
-                   ("Copper Mine", "/imgs/mine/copper_mine.png", 1, "A copper mine."), 
+                   ("Copper Mine", "/imgs/mine/copper_mine.png", 1, "A copper mine."),
                    ("Petrol Mine", "/imgs/mine/petrol_mine.png", 2, "Petrol mining facility."),
                    ("Crystal Mine", "/imgs/mine/crystal_mine.png", 3, "The crystal mine.")
     `);
@@ -571,7 +581,7 @@ function setupDatabase() {
         });
     }
 
-    async function canUpdateBuilding(userId, level) {
+    async function canUpdateBuilding(userId, level, buildingId) {
         try {
             const character = await new Promise((resolve, reject) => {
                 findCharacterByUserId(userId, (err, row) => {
@@ -595,7 +605,11 @@ function setupDatabase() {
             //console.log(character.id);
             //console.log(life_support_level);
 
-            return life_support_level.level > level;
+            if (buildingId !== 1) {
+                return life_support_level.level > level;
+            } else {
+                return true
+            }
 
         } catch (err) {
             console.error('Error finding character or querying database:', err.message);
@@ -615,6 +629,35 @@ function setupDatabase() {
             return false; // Return false if there was an error updating the level
         }
     }
+
+    async function getSmeltingRate(resource, level) {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT * FROM smelting_conversion_rate WHERE resource = ? AND level = ?`;
+            db.get(sql, [resource, level], (err, row) => {
+                if (err) {
+                    console.error('Error:', err);
+                    reject(err);
+                } else {
+                    // If no record found, return null
+                    const smeltingRate = row || null;
+                    resolve(smeltingRate);
+                }
+            });
+        });
+    }
+
+    //Pour la route de création des bâtiments
+    async function getSmeltingRates(resource, level, callback) {
+        const sql = `SELECT * FROM smelting_conversion_rate WHERE resource = ? AND level = ?`
+        db.get(sql, [resource, level], (err, row) => {
+            if (err) {
+                callback(err, null)
+            }
+
+            callback(null, row)
+        })
+    }
+
 
     /*
         MINES FUNCTIONS
@@ -685,7 +728,7 @@ function setupDatabase() {
      */
 
     // Function to add or update resources for a character
-    function addOrUpdateResourcesForCharacter(characterId, resources, callback) {
+    async function addOrUpdateResourcesForCharacter(characterId, resources, callback) {
         const sql = `SELECT * FROM character_resources WHERE character_id = ?`;
 
         db.get(sql, [characterId], (err, row) => {
@@ -801,11 +844,119 @@ function setupDatabase() {
 
     }
 
+    /*
+        REFINING
+     */
+
+    async function refineCharacterResources(userId, characterId, resourceType) {
+        const maxCapacity = await new Promise((resolve, reject) => {
+            getCharacteristics(userId, 7, (err, characteristics) => {
+                if (err) {
+                    reject(new Error("Error characteristics not found"));
+                } else {
+                    resolve(characteristics.storage_capacity);
+                }
+            });
+        });
+
+        const resources = await new Promise((resolve, reject) => {
+            getResourcesForCharacter(userId, (err, resources) => {
+                if (err) {
+                    reject(new Error("Error fetching character resources"));
+                } else {
+                    if (resources === null) {
+                        reject(new Error('Character resources not found.'));
+                    } else {
+                        resolve(resources);
+                    }
+                }
+            });
+        });
+
+        const buildingsData = await new Promise((resolve, reject) => {
+            getCharacterBuildingInfo(characterId, (err, level) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(level);
+                }
+            });
+        });
+
+        const smeltingData = buildingsData.find((building) => building.building_id === 8);
+        const level = smeltingData.level;
+
+        const rate = await getSmeltingRate(resourceType, level).catch((err) => {
+            console.error('Error fetching smelting rate', err.message);
+            throw err;
+        });
+
+        const { resource, raw_resource, process_speed, process_resource } = rate;
+
+        // Simulate processing time using setTimeout and async/await
+        await new Promise((resolve) => setTimeout(resolve, process_speed * 1000));
+
+        // Calculate the refined resources
+        let raw;
+        switch (resourceType) {
+            case 'steel':
+                raw = 'iron';
+                break;
+            case 'components':
+                raw = 'copper';
+                break;
+            case 'plastic':
+                raw = 'petrol';
+                break;
+            default:
+                raw = 'Error';
+                break;
+        }
+
+        const currentResource = resources[resource];
+
+        if (currentResource < maxCapacity) {
+            await subtractResourceInDatabase(raw, raw_resource, characterId);
+            await updateResourceInDatabase(resource, process_resource, characterId);
+            //console.log(`Resource ${resource} refined: ${process_resource}`);
+        } else {
+            console.log(`RefineCharacterResources: ${resource} MaxCapacity`);
+        }
+    }
+
+
+    async function refineSteel(userId, characterId) {
+        await refineCharacterResources(userId, characterId, 'steel');
+    }
+
+    async function refineComponents(userId, characterId) {
+        await refineCharacterResources(userId, characterId, 'components');
+    }
+
+    async function refinePlastic(userId, characterId) {
+        await refineCharacterResources(userId, characterId, 'plastic');
+    }
+
+    /*
+        END REFINING
+     */
+
     async function updateResourceInDatabase(resource, value, characterId) {
         const updateSql = `UPDATE character_resources SET ${resource} = ${resource} + ? WHERE character_id = ?`;
         await db.run(updateSql, [value, characterId], (err) => {
             if (err) {
                 console.error('Error updating resources:', err.message);
+            } else {
+                //console.log('Resources updated successfully.');
+            }
+        });
+    }
+
+    async function subtractResourceInDatabase(resource, value, characterId) {
+        const updateSql = `UPDATE character_resources SET ${resource} = ${resource} - ? WHERE character_id = ?`;
+        await db.run(updateSql, [value, characterId], (err) => {
+            if (err) {
+                console.error('Error subtracting resources:', err.message);
             } else {
                 //console.log('Resources updated successfully.');
             }
@@ -915,12 +1066,16 @@ function setupDatabase() {
         getCharacterBuildingInfo,
         addOrUpdateResourcesForCharacter,
         updateCharacterResources,
+        refineSteel,
+        refineComponents,
+        refinePlastic,
         getResourcesForCharacter,
         updateBuildingLevel,
         updateMineLevel,
         getCharacterMinesInfo,
         getMineData,
         getMineLevelUpCost,
+        getSmeltingRates,
         getCharacteristics
     };
 }

@@ -13,12 +13,6 @@ html {
     background: url("/imgs/spacestation_background.jpg") center/cover;
 }
 
-.container-base {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-}
-
 .circle-container {
     position: relative;
     width: 700px;

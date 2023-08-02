@@ -13,12 +13,6 @@ html {
     background: url("/imgs/planet_background.jpg") center/cover;
 }
 
-.container-planet {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-}
-
 .square-container {
     position: relative;
     display: grid;

@@ -1,10 +1,9 @@
 const database = require('./database')
 const db = database()
 
-function customRound(value, decimals) {
-    const factor = 10 ** decimals;
-    return Math.round(value * factor) / factor;
-}
+let refiningSteelInProgress = false;
+let refiningComponentsInProgress = false;
+let refiningPlasticInProgress = false;
 
 async function updateResources(userId, characterId) {
     try {
@@ -59,4 +58,92 @@ async function updateResources(userId, characterId) {
     }
 }
 
-module.exports = { updateResources };
+async function refineSteel(userId, characterId) {
+
+    try {
+        while (refiningSteelInProgress) {
+            // Use Promise.all() to execute the three refining functions simultaneously
+            await Promise.all([
+                db.refineSteel(userId, characterId)
+            ]);
+        }
+    } catch (error) {
+        console.error('Error refining resources:', error.message);
+    }
+}
+
+async function refineComponents(userId, characterId) {
+
+    try {
+        while (refiningComponentsInProgress) {
+            // Use Promise.all() to execute the three refining functions simultaneously
+            await Promise.all([
+                db.refineComponents(userId, characterId)
+            ]);
+        }
+    } catch (error) {
+        console.error('Error refining resources:', error.message);
+    }
+}
+
+async function refinePlastic(userId, characterId) {
+
+    try {
+        while (refiningPlasticInProgress) {
+            // Use Promise.all() to execute the three refining functions simultaneously
+            await Promise.all([
+                db.refinePlastic(userId, characterId)
+            ]);
+        }
+    } catch (error) {
+        console.error('Error refining resources:', error.message);
+    }
+}
+
+function startRefining(userId, characterID) {
+    refiningSteelInProgress = true
+    refiningComponentsInProgress = true
+    refiningPlasticInProgress = true
+    refineSteel(userId, characterID);
+    refineComponents(userId, characterID);
+    refinePlastic(userId, characterID);
+}
+
+function startRefiningSteel(userId, characterID) {
+    refiningSteelInProgress = true
+    refineSteel(userId, characterID)
+}
+
+function startRefiningComponents(userId, characterID) {
+    refiningComponentsInProgress = true
+    refineComponents(userId, characterID)
+}
+
+function startRefiningPlastic(userId, characterID) {
+    refiningPlasticInProgress = true
+    refinePlastic(userId, characterID)
+}
+
+function stopRefining() {
+    refiningSteelInProgress = false
+    refiningComponentsInProgress = false
+    refiningPlasticInProgress = false
+}
+
+function stopRefiningSteel() {
+    refiningSteelInProgress = false
+}
+
+function stopRefiningComponents() {
+    refiningComponentsInProgress = false
+}
+
+function stopRefiningPlastic() {
+    refiningPlasticInProgress = false
+}
+
+module.exports = {
+    updateResources,
+    startRefining, startRefiningSteel, startRefiningComponents, startRefiningPlastic,
+    stopRefining, stopRefiningSteel, stopRefiningComponents, stopRefiningPlastic
+};
