@@ -1,15 +1,3 @@
-.smelting-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 700px;
-    height: 700px;
-    border: 2px solid white;
-    background-color: rgba(6, 8, 16, 0.75);
-}
-
 .horizontal-container {
     display: flex;
 }

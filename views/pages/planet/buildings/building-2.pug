@@ -1,4 +1,11 @@
 extends ../../../layouts/base
 
+block css
+    link(rel='stylesheet', href='/CSS/buildings/buildings.css')
 block layout-content
-    p Index : #{index}
+    .page-container
+        .building-container
+            h1 Housing Module
+            p Habitation zone for the soldiers and the workers.
+            p The maximum capacity of this zone is : #{housingCapacity} people.
+            p You actually have : [Number] people here.

@@ -1,4 +1,10 @@
 extends ../../../layouts/base
 
+block css
+    link(rel='stylesheet', href='/CSS/buildings/buildings.css')
 block layout-content
-    p Index : #{index}
+    .page-container
+        .building-container
+            h1 Storage Room
+            p Storage for all the resources
+            p The maximum capacity of this zone is : #{storageCapacity} for each resource.

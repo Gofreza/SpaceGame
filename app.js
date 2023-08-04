@@ -28,7 +28,8 @@ const authRoutes = require('./routes/auth');
 const globalRoutes = require('./routes/globale')
 const createCharacterRoute = require('./routes/characters')
 const apiRoute = require('./routes/api')
-app.use(authRoutes, globalRoutes, createCharacterRoute, apiRoute);
+const buildingsRoute = require('./routes/buildings')
+app.use(authRoutes, globalRoutes, createCharacterRoute, apiRoute, buildingsRoute);
 
 //Start the server
 app.listen(port, hostname, () => {
