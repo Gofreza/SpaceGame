@@ -3,6 +3,7 @@ const router = express.Router();
 const {requireAuth, requireNotAuth, levelUpBuilding, levelUpMine, showBuildingPage} = require('../functions')
 
 const database = require('../database')
+const {isRefiningOn, isRefiningSteelOn, isRefiningComponentsOn, isRefiningPlasticOn} = require("../updateResources");
 const db = database()
 
 router.get('/building-page/:index', requireAuth, (req, res) => {
@@ -59,19 +60,41 @@ router.get('/building-page/:index', requireAuth, (req, res) => {
                 if (index === 2) {
                     const housingData = buildingsData.find(building => building.building_id === index + 1);
 
-                    await db.getCharacteristics(userId, housingData.building_id, (err, row) => {
+                    await db.getCharacteristics(userId, housingData.building_id, async (err, row) => {
 
                         if (err) {
                             console.log('Route : Character characteristic not found !')
                         }
 
                         if (row === null) {
+                            //Population de base
                             row = 200
-                        }
-                        else{
+                        } else {
                             //console.log(row)
                             row = row.population_capacity
                         }
+
+                        const {current_pop} = await db.getCurrentPop(userId);
+
+                        const {worker_pop} = await new Promise((resolve, reject) => {
+                            db.getWorkerPop(userId, (err, workerPop) => {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve(workerPop);
+                                }
+                            });
+                        });
+
+                        const {free_pop} = await new Promise((resolve, reject) => {
+                            db.getFreePop(userId, (err, freePop) => {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve(freePop);
+                                }
+                            });
+                        });
 
                         res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
                             title: title,
@@ -79,6 +102,9 @@ router.get('/building-page/:index', requireAuth, (req, res) => {
                             index: index,
                             resources: resources,
                             housingCapacity: row,
+                            currentPop: current_pop,
+                            workerPop: worker_pop,
+                            freePop: free_pop,
                             showMenuBar: true
                         });
 
@@ -138,12 +164,30 @@ router.get('/building-page/:index', requireAuth, (req, res) => {
                         smeltingRates.push(res); // Push 'res' into the 'result' array
                     }
 
+                    let refiningStatus = [];
+
+                    if (isRefiningOn()) {
+                        refiningStatus.push("on")
+                    }else {refiningStatus.push("off")}
+                    if (isRefiningSteelOn()) {
+                        refiningStatus.push("steelOn")
+                    }else {refiningStatus.push("off")}
+                    if (isRefiningComponentsOn()) {
+                        refiningStatus.push("componentsOn")
+                    }else {refiningStatus.push("off")}
+                    if (isRefiningPlasticOn()) {
+                        refiningStatus.push("plasticOn")
+                    }else {refiningStatus.push("off")}
+
+                    //console.log(smeltingRates)
+
                     res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
                         title: title,
                         flash: flashMessages,
                         index: index,
                         resources: resources,
                         smeltingRates: smeltingRates,
+                        refiningStatus:refiningStatus,
                         showMenuBar: true
                     });
 

@@ -4,7 +4,7 @@ const {requireAuth, requireNotAuth, levelUpBuilding, levelUpMine, showBuildingPa
 
 const database = require('../database')
 const {startRefining, stopRefining, startRefiningSteel, startRefiningComponents, startRefiningPlastic,
-    stopRefiningSteel, stopRefiningComponents
+    stopRefiningSteel, stopRefiningComponents, stopRefiningPlastic, isRefiningOn
 } = require("../updateResources");
 const db = database()
 
@@ -33,7 +33,7 @@ router.get('/dashboard', requireAuth, async (req, res) => {
                 industry = attributeValues.industry
                 technology = attributeValues.technology
 
-                db.getResourcesForCharacter(userId, (err, resources) => {
+                db.getResourcesForCharacter(userId, async (err, resources) => {
                     if (err) {
                         // Handle error
                     } else {
@@ -42,19 +42,78 @@ router.get('/dashboard', requireAuth, async (req, res) => {
                         } else {
                             //console.log('Resources for character:', resources);
 
-                            res.render("../views/pages/dashboard.pug", {
-                                title: "Dashboard",
-                                flash: flashMessages,
-                                username: username,
-                                imgUrl: imgUrl,
-                                name:name,
-                                level:level,
-                                combat_stat:combat,
-                                industry_stat:industry,
-                                technology_stat:technology,
-                                resources:resources,
-                                showMenuBar: true
+                            let refiningStatus;
+
+                            if (isRefiningOn()) {
+                                refiningStatus = "on"
+                            } else {
+                                refiningStatus = "off"
+                            }
+
+                            const population = await new Promise((resolve, reject) => {
+                                db.getCharacterPopulation(userId, (err, population) => {
+                                    if (err) {
+                                        reject(err);
+                                    } else {
+                                        resolve(population);
+                                    }
+                                });
                             });
+
+                            //For maxPop
+                            const character = await new Promise((resolve, reject) => {
+                                db.findCharacterByUserId(userId, (err, row) => {
+                                    if (err) {
+                                        reject(err);
+                                    } else {
+                                        resolve(row);
+                                    }
+                                });
+                            });
+
+                            const buildingsData = await new Promise((resolve, reject) => {
+                                db.getCharacterBuildingInfo(character.id, (err, level) => {
+                                    if (err) {
+                                        reject(err);
+                                    } else {
+                                        resolve(level);
+                                    }
+                                });
+                            });
+
+                            const housingData = buildingsData.find(building => building.building_id === 3);
+
+                            await db.getCharacteristics(userId, housingData.building_id, async (err, max_pop) => {
+
+                                if (err) {
+                                    console.log('Route : Character characteristic not found !')
+                                }
+
+                                if (max_pop === null) {
+                                    //Population de base
+                                    max_pop = 200
+                                } else {
+                                    //console.log(row)
+                                    max_pop = max_pop.population_capacity
+                                }
+
+                                res.render("../views/pages/dashboard.pug", {
+                                    title: "Dashboard",
+                                    flash: flashMessages,
+                                    username: username,
+                                    imgUrl: imgUrl,
+                                    name: name,
+                                    level: level,
+                                    combat_stat: combat,
+                                    industry_stat: industry,
+                                    technology_stat: technology,
+                                    resources: resources,
+                                    refiningStatus: refiningStatus,
+                                    maxPop : max_pop,
+                                    population: population,
+                                    showMenuBar: true
+                                });
+                            })
                         }
                     }
                 });
@@ -257,7 +316,7 @@ router.post('/refining', requireAuth, async (req, res) => {
     } else if (progress === "stopComponents") {
         stopRefiningComponents()
     } else if (progress === "stopPlastic") {
-        stopRefining()
+        stopRefiningPlastic()
     } else {
         stopRefining();
     }

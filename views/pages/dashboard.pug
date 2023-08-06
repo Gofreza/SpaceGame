@@ -58,6 +58,25 @@ block layout-content
                         form(id=`stopForm` action="/refining" method="POST")
                             input(type="hidden" name="progress" value="stop")
                             button(type="button" id=`buttonStop`) Stop All
+                    - if (refiningStatus === "on")
+                        .refining-status-box.on
+                            span ON
+                    - else
+                        .refining-status-box.off
+                            span OFF
+                .population
+                    table
+                        tr
+                            td Population
+                        tr
+                            td Current Pop :
+                            td#currentPop #{population.current_pop.current_pop} / #{maxPop}
+                        tr
+                            td Worker Pop :
+                            td#workerPop #{population.worker_pop.worker_pop}
+                        tr
+                            td Free Pop :
+                            td#freePop #{population.free_pop.free_pop}
                 .content
     script(src="/JS/resources.js")
     script.

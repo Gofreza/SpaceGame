@@ -99,7 +99,7 @@ async function levelUpBuilding(index, req, res) {
                                     if (resources === null) {
                                         console.log('Character resources not found.');
                                     } else {
-                                        console.log('Resources for character:', resources);
+                                        //console.log('Resources for character:', resources);
 
                                         //Yeah he got enough
                                         if (resources.steel >= levelUpCostData.steel && resources.components >= levelUpCostData.components
@@ -109,7 +109,7 @@ async function levelUpBuilding(index, req, res) {
                                                 .then((result) => {
                                                     if (result) {
                                                         // Update was successful
-                                                        console.log('Building level updated successfully.');
+                                                        //console.log('Building level updated successfully.');
                                                         // You can perform additional actions here if needed
 
                                                         const newresources = {

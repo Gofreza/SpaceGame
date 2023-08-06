@@ -1,6 +1,7 @@
 const database = require('./database')
 const db = database()
 
+let refiningOn = false;
 let refiningSteelInProgress = false;
 let refiningComponentsInProgress = false;
 let refiningPlasticInProgress = false;
@@ -107,43 +108,74 @@ function startRefining(userId, characterID) {
     refineSteel(userId, characterID);
     refineComponents(userId, characterID);
     refinePlastic(userId, characterID);
+    switchRefiningOn();
 }
 
 function startRefiningSteel(userId, characterID) {
     refiningSteelInProgress = true
     refineSteel(userId, characterID)
+    switchRefiningOn();
 }
 
 function startRefiningComponents(userId, characterID) {
     refiningComponentsInProgress = true
     refineComponents(userId, characterID)
+    switchRefiningOn();
 }
 
 function startRefiningPlastic(userId, characterID) {
     refiningPlasticInProgress = true
     refinePlastic(userId, characterID)
+    switchRefiningOn();
 }
 
 function stopRefining() {
     refiningSteelInProgress = false
     refiningComponentsInProgress = false
     refiningPlasticInProgress = false
+    switchRefiningOff();
 }
 
 function stopRefiningSteel() {
     refiningSteelInProgress = false
+    switchRefiningOff();
 }
 
 function stopRefiningComponents() {
     refiningComponentsInProgress = false
+    switchRefiningOff
 }
 
 function stopRefiningPlastic() {
     refiningPlasticInProgress = false
+    switchRefiningOff
+}
+
+function switchRefiningOn() {
+    refiningOn = true;
+}
+function switchRefiningOff(){
+    refiningOn = false;
+}
+function isRefiningOn() {
+    return refiningOn;
+}
+
+function isRefiningSteelOn() {
+    return refiningSteelInProgress;
+}
+
+function isRefiningComponentsOn() {
+    return refiningComponentsInProgress;
+}
+
+function isRefiningPlasticOn() {
+    return refiningPlasticInProgress;
 }
 
 module.exports = {
     updateResources,
     startRefining, startRefiningSteel, startRefiningComponents, startRefiningPlastic,
-    stopRefining, stopRefiningSteel, stopRefiningComponents, stopRefiningPlastic
+    stopRefining, stopRefiningSteel, stopRefiningComponents, stopRefiningPlastic,
+    isRefiningOn, isRefiningSteelOn, isRefiningComponentsOn, isRefiningPlasticOn
 };

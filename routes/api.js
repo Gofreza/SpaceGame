@@ -5,8 +5,8 @@ const {requireAuth} = require('../functions')
 const database = require('../database')
 const db = database()
 
-router.get('/api/resources', requireAuth, (req, res) => {
-    db.getResourcesForCharacter(req.session.userId, (err, resources) => {
+router.get('/api/resources', requireAuth, async (req, res) => {
+    await db.getResourcesForCharacter(req.session.userId, (err, resources) => {
         if (err) {
             // Handle error
         } else {
@@ -19,6 +19,22 @@ router.get('/api/resources', requireAuth, (req, res) => {
             }
         }
     })
+})
+
+router.get('/api/population', requireAuth, async (req, res) => {
+    await db.getCharacterPopulation(req.session.userId, (err, population) => {
+        if (err) {
+            // Handle error
+        } else {
+            if (population === null) {
+                console.log('Population not found.');
+            } else {
+                //console.log('Resources for character:', resources);
+                //console.log(resources)
+                res.json(population)
+            }
+        }
+    });
 })
 
 module.exports = router;

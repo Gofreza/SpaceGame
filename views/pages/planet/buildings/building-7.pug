@@ -18,9 +18,45 @@ block layout-content
                     - const resourceName = rate.resource.charAt(0).toUpperCase() + rate.resource.slice(1)
                     - const resourceClass = rate.resource.toLowerCase()
                     - let rawClass = (resourceClass === 'steel') ? 'iron' : (resourceClass === 'components') ? 'copper' : 'default';
-                    if ['steel', 'components'].includes(resourceClass)
+                    if ['steel'].includes(resourceClass)
                         .box(class=resourceClass)
-                            p= resourceName
+                            .horizontal-container
+                                .refining
+                                    .refining-status-text
+                                        p= resourceName
+                                    .refining-status-box-container
+                                        - if (refiningStatus.includes("steelOn"))
+                                            .refining-status-box.steel.on
+                                                span ON
+                                        - else
+                                            .refining-status-box.off
+                                                span OFF
+                            p #{rate.raw_resource} #{rawClass} -> #{rate.process_resource} #{resourceName} &nbsp; in #{rate.process_speed}s
+                            .animated-gradient(id=`gradient${resourceName}`)
+                            .buttons
+                                form(id=`startForm${resourceName}` action="/refining" method="POST")
+                                    input(type="hidden" name="progress" value=`start${resourceName}`)
+                                    button(type="button" id=`buttonStart${resourceName}`) Start
+                                form(id=`stopForm${resourceName}` action="/refining" method="POST")
+                                    input(type="hidden" name="progress" value=`stop${resourceName}`)
+                                    button(type="button" id=`buttonStop${resourceName}`) Stop
+                each rate in smeltingRates
+                    - const resourceName = rate.resource.charAt(0).toUpperCase() + rate.resource.slice(1)
+                    - const resourceClass = rate.resource.toLowerCase()
+                    - let rawClass = (resourceClass === 'steel') ? 'iron' : (resourceClass === 'components') ? 'copper' : 'default';
+                    if ['components'].includes(resourceClass)
+                        .box(class=resourceClass)
+                            .horizontal-container
+                                .refining
+                                    .refining-status-text
+                                        p= resourceName
+                                    .refining-status-box-container
+                                        - if (refiningStatus.includes("componentsOn"))
+                                            .refining-status-box.steel.on
+                                                span ON
+                                        - else
+                                            .refining-status-box.off
+                                                span OFF
                             p #{rate.raw_resource} #{rawClass} -> #{rate.process_resource} #{resourceName} &nbsp; in #{rate.process_speed}s
                             .animated-gradient(id=`gradient${resourceName}`)
                             .buttons
@@ -36,7 +72,17 @@ block layout-content
                 - let rawClass = (resourceClass === 'plastic') ? 'petrol' : 'default';
                 if ['plastic'].includes(resourceClass)
                     .box(class=resourceClass)
-                        p= resourceName
+                        .horizontal-container
+                            .refining
+                                .refining-status-text
+                                    p= resourceName
+                                .refining-status-box-container
+                                    - if (refiningStatus.includes("plasticOn"))
+                                        .refining-status-box.steel.on
+                                            span ON
+                                    - else
+                                        .refining-status-box.off
+                                            span OFF
                         p #{rate.raw_resource} #{rawClass} -> #{rate.process_resource} #{resourceName} &nbsp; in #{rate.process_speed}s
                         .animated-gradient(id=`gradient${resourceName}`)
                         .buttons

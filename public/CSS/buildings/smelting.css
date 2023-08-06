@@ -4,7 +4,7 @@
 
 .box {
     width: 300px;
-    height: 150px;
+    height: 155px;
     background-color: #007bff;
     margin: 10px;
     padding-left: 10px;
@@ -34,4 +34,19 @@
     flex-direction: row;
     gap: 10px;
     justify-content: normal;
+}
+
+.refining {
+    display: flex;
+    align-items: center;
+}
+
+.refining-status-box-container {
+    display: flex;
+    align-items: center;
+}
+
+.refining-status-text {
+    margin-right: 10px;
+    font-weight: bold;
 }
