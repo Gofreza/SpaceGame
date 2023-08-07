@@ -11,6 +11,7 @@ const db = database()
 router.get('/dashboard', requireAuth, async (req, res) => {
     const flashMessages = req.flash(); // Retrieve flash messages from the session
     const username = req.session.username;
+    console.log("dash:", req.session)
 
     const userId = req.session.userId
     const attributesToGet = ['name', 'imgurl', 'level', 'combat', 'industry', 'technology'];

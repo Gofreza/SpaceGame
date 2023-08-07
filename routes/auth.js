@@ -4,7 +4,9 @@ const router = express.Router();
 
 const database = require('../database')
 const {requireNotAuth} = require("../functions");
-const {updateResources, refineResources, stopRefining, refineSteel, refineComponents, refinePlastic, startRefining} = require("../updateResources");
+const {updateResources, refineResources, stopRefining, refineSteel, refineComponents, refinePlastic, startRefining,
+    startUpdateResourcesPeriodically, stopTimeout,
+} = require("../updateResources");
 const db = database()
 
 // GET login page
@@ -64,7 +66,6 @@ router.post('/login', requireNotAuth, (req, res) => {
                     // User has a character linked
                     console.log('User has a character linked.');
                     req.flash('success', 'Log in successful !');
-                    res.redirect('/dashboard');
 
                     db.findCharacterByUserId(req.session.userId, (err, character) => {
                         if (err) {
@@ -79,14 +80,28 @@ router.post('/login', requireNotAuth, (req, res) => {
                             return;
                         }
 
+                        req.session.characterId = character.id
+
                         // Start the interval to update resources every second
                         // Update resources every second (1000 milliseconds)
                         // Save the interval ID in the session so you can clear it later
-                        req.session.intervalId = setInterval(async () => {
-                            await updateResources(req.session.userId, character.id)
+                        /*req.session.intervalId = setInterval(async () => {
+                            //await updateResources(req.session.userId, character.id)
                             //.then(r => console.log("--Update Resources--"));
                             await db.updatePopulation(req.session.userId)
                         }, 1000);
+
+                         */
+
+                        const userId = req.session.userId;
+                        const characterId = character.id;
+
+                        req.session.characterId = characterId
+                        req.session.timeoutStop = false;
+
+                        startUpdateResourcesPeriodically(userId, characterId, req)
+
+                        res.redirect('/dashboard');
 
                     })
 
@@ -123,7 +138,9 @@ router.post('/register', (req, res) => {
 
 //Get logout page
 router.get('/logout', (req, res) => {
-    clearInterval(req.session.intervalId);
+
+    stopTimeout(req)
+
     req.session.destroy((error) => {
         if (error) {
             console.error('Error occurred while logging out:', error);

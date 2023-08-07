@@ -173,9 +173,42 @@ function isRefiningPlasticOn() {
     return refiningPlasticInProgress;
 }
 
+/*
+    Auto resource function
+ */
+
+const activeTimeouts = {}; // Object to store active timeouts
+
+function startUpdateResourcesPeriodically(userId, characterId, req) {
+    async function updateResourcesPeriodically(userId, characterId) {
+        if (req.session.timeoutStop) {
+            return;
+        }
+
+        await updateResources(userId, characterId);
+
+        // Call the function again after a delay, only if timeoutStop is not defined
+        if (!req.session.timeoutStop) {
+            activeTimeouts[req.session.userId] = setTimeout(updateResourcesPeriodically, 1000, userId, characterId); // Store the timeout ID
+        }
+    }
+
+    // Start the periodic update
+    activeTimeouts[req.session.userId] = setTimeout(updateResourcesPeriodically, 1000, userId, characterId); // Store the timeout ID
+}
+
+function stopTimeout(req) {
+    const timeoutId = activeTimeouts[req.session.userId];
+    if (timeoutId) {
+        clearTimeout(timeoutId);
+        delete activeTimeouts[req.session.userId];
+    }
+}
+
 module.exports = {
     updateResources,
     startRefining, startRefiningSteel, startRefiningComponents, startRefiningPlastic,
     stopRefining, stopRefiningSteel, stopRefiningComponents, stopRefiningPlastic,
-    isRefiningOn, isRefiningSteelOn, isRefiningComponentsOn, isRefiningPlasticOn
+    isRefiningOn, isRefiningSteelOn, isRefiningComponentsOn, isRefiningPlasticOn,
+    startUpdateResourcesPeriodically, stopTimeout
 };
