@@ -186,6 +186,7 @@ function startUpdateResourcesPeriodically(userId, characterId, req) {
         }
 
         await updateResources(userId, characterId);
+        await db.updatePopulation(userId)
 
         // Call the function again after a delay, only if timeoutStop is not defined
         if (!req.session.timeoutStop) {

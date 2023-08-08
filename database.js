@@ -52,6 +52,7 @@ function setupDatabase() {
         Technology = bonus to fleet speed
 
      */
+
     db.run(`CREATE TABLE IF NOT EXISTS character_classes (
     id INTEGER PRIMARY KEY,
     class_name TEXT NOT NULL,
@@ -258,74 +259,74 @@ function setupDatabase() {
         }
 
         function changePassword(req, res, currentPassword, newPassword, confirmPassword) {
-        const userId = req.session.userId;
+            const userId = req.session.userId;
 
-        // Check if the passwords match
-        if (newPassword !== confirmPassword) {
-            req.flash('error', 'Passwords do not match. Please try again.');
-            return res.redirect('/profile');
-        }
-
-        // Retrieve the hashed password from the database
-        const sql = `SELECT password FROM users WHERE id = ?`;
-        db.get(sql, [userId], (err, row) => {
-            if (err) {
-                console.error('Error retrieving password from the database:', err.message);
-                req.flash('error', 'Failed to change password.');
+            // Check if the passwords match
+            if (newPassword !== confirmPassword) {
+                req.flash('error', 'Passwords do not match. Please try again.');
                 return res.redirect('/profile');
             }
 
-            if (!row) {
-                req.flash('error', 'User not found.');
-                return res.redirect('/profile');
-            }
-
-            const storedPassword = row.password;
-
-            // Compare the current password with the stored hashed password
-            bcrypt.compare(currentPassword, storedPassword, (err, isMatch) => {
+            // Retrieve the hashed password from the database
+            const sql = `SELECT password FROM users WHERE id = ?`;
+            db.get(sql, [userId], (err, row) => {
                 if (err) {
-                    console.error('Error comparing passwords:', err.message);
+                    console.error('Error retrieving password from the database:', err.message);
                     req.flash('error', 'Failed to change password.');
                     return res.redirect('/profile');
                 }
 
-                if (!isMatch) {
-                    req.flash('error', 'Current password is incorrect.');
+                if (!row) {
+                    req.flash('error', 'User not found.');
                     return res.redirect('/profile');
                 }
 
-                // Hash the new password before updating the database
-                bcrypt.genSalt(10, (err, salt) => {
+                const storedPassword = row.password;
+
+                // Compare the current password with the stored hashed password
+                bcrypt.compare(currentPassword, storedPassword, (err, isMatch) => {
                     if (err) {
-                        console.error('Error generating salt:', err.message);
+                        console.error('Error comparing passwords:', err.message);
                         req.flash('error', 'Failed to change password.');
                         return res.redirect('/profile');
                     }
 
-                    bcrypt.hash(newPassword, salt, (err, hashedPassword) => {
+                    if (!isMatch) {
+                        req.flash('error', 'Current password is incorrect.');
+                        return res.redirect('/profile');
+                    }
+
+                    // Hash the new password before updating the database
+                    bcrypt.genSalt(10, (err, salt) => {
                         if (err) {
-                            console.error('Error hashing password:', err.message);
+                            console.error('Error generating salt:', err.message);
                             req.flash('error', 'Failed to change password.');
                             return res.redirect('/profile');
                         }
 
-                        // Update the password in the database
-                        const updateSql = `UPDATE users SET password = ? WHERE id = ?`;
-                        db.run(updateSql, [hashedPassword, userId], (err) => {
+                        bcrypt.hash(newPassword, salt, (err, hashedPassword) => {
                             if (err) {
-                                console.error('Error updating password:', err.message);
+                                console.error('Error hashing password:', err.message);
                                 req.flash('error', 'Failed to change password.');
-                            } else {
-                                req.flash('success', 'Password changed successfully.');
+                                return res.redirect('/profile');
                             }
-                            res.redirect('/profile');
+
+                            // Update the password in the database
+                            const updateSql = `UPDATE users SET password = ? WHERE id = ?`;
+                            db.run(updateSql, [hashedPassword, userId], (err) => {
+                                if (err) {
+                                    console.error('Error updating password:', err.message);
+                                    req.flash('error', 'Failed to change password.');
+                                } else {
+                                    req.flash('success', 'Password changed successfully.');
+                                }
+                                res.redirect('/profile');
+                            });
                         });
                     });
                 });
             });
-        });
-    }
+        }
 
     /*  =======================
          CHARACTER FUNCTIONS
@@ -571,7 +572,6 @@ function setupDatabase() {
             });
         }
 
-
         async function getBuildingData(buildingId, callback) {
             const sql = `SELECT * FROM buildings WHERE id = ?`;
             db.get(sql, [buildingId], (err, row) => {
@@ -587,7 +587,6 @@ function setupDatabase() {
                 callback(null, buildingData);
             });
         }
-
 
         async function getBuildingLevelUpCost(buildingId, level, callback) {
             const sql = `SELECT steel, plastic, components, money FROM buildings_level_up_costs WHERE building_id = ? AND level = ?`;
