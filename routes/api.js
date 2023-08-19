@@ -6,19 +6,8 @@ const database = require('../database')
 const db = database()
 
 router.get('/api/resources', requireAuth, async (req, res) => {
-    await db.getResourcesForCharacter(req.session.userId, (err, resources) => {
-        if (err) {
-            // Handle error
-        } else {
-            if (resources === null) {
-                console.log('Character resources not found.');
-            } else {
-                //console.log('Resources for character:', resources);
-                //console.log(resources)
-                res.json(resources)
-            }
-        }
-    })
+    const resources = await db.getResourcesForCharacterBis(req.session.characterId)
+    res.json(resources)
 })
 
 router.get('/api/population', requireAuth, async (req, res) => {

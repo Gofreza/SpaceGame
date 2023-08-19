@@ -17,7 +17,7 @@ html {
     position: relative;
     width: 700px;
     height: 700px;
-    border: 2px solid white;
+    border: 2px solid rgb(48, 52, 54);
     background-color: rgba(6, 8, 16, 0.75);
 }
 
@@ -34,14 +34,14 @@ html {
     left: 50%;
     overflow: hidden;
     transform: translate(-50%, -50%);
-    border: 1px solid white;
+    border: 1px solid rgb(48, 52, 54);
 }
 
 .center-item img, .circle-item img {
     width: 150px;
     height: 150px;
     border-radius: 15%;
-    border: 2px solid white;
+    border: 2px solid rgb(48, 52, 54);
 }
 
 .circle-item {
@@ -53,7 +53,7 @@ html {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border: 1px solid white;
+    border: 1px solid rgb(48, 52, 54);
 }
 
 .buttons {

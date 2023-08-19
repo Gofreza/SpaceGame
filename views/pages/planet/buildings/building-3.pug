@@ -1,5 +1,57 @@
 extends ../../../layouts/base
 
+block css
+    link(rel='stylesheet', href='/CSS/buildings/buildings.css')
+    link(rel='stylesheet', href='/CSS/buildings/commercial.css')
 block layout-content
-    h1 Commercial Hub
-    p Index : #{index}
+    .page-container
+        .building-container
+            h1 Commercial Hub
+            form(id='sellForm' action="/sell" method="POST")
+                each name in resourcesName
+                    if name !== "Money"
+                        span #{name}
+
+                        .horizontal-container
+                            button(type="button" id=`buttonMinus${name}`) -
+
+                            textarea(id=`quantity${name}` name="commercialArea" rows="1" cols="20" maxlength="6") 0
+
+                            button(type="button" id=`buttonPlus${name}`) +
+
+                button(type="button" id=`buttonSell`) Sell
+        .resources
+            table
+                tr
+                    td Iron :
+                    td#iron #{resources.iron}
+                tr
+                    td Steel :
+                    td#steel #{resources.steel}
+                tr
+                    td Copper :
+                    td#copper #{resources.copper}
+                tr
+                    td Component :
+                    td#components #{resources.components}
+                tr
+                    td Petrol :
+                    td#petrol #{resources.petrol}
+                tr
+                    td Plastic :
+                    td#plastic #{resources.plastic}
+                tr
+                    td Money :
+                    td#money #{resources.money}
+                tr
+                    td Crystal :
+                    td#crystal #{resources.crystal}
+    script(src="/JS/resources.js")
+    script(src="/JS/selling.js")
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add an event listener for the "Start" button
+            document.getElementById(`buttonSell`).addEventListener('click', (event) => {
+                document.getElementById(`sellForm`).submit();
+            });
+        })

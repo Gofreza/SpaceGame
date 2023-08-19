@@ -20,7 +20,7 @@ html {
     grid-template-rows: repeat(2, 150px); /* Adjust the size of the squares here */
     gap: 60px; /* Adjust the gap between squares here */
     background-color: rgba(6, 8, 16, 0.75);
-    border: 2px solid white;
+    border: 2px solid rgb(48, 52, 54);
     padding: 20px;
 }
 
@@ -31,7 +31,7 @@ html {
     height: 100%;
     overflow: hidden;
     border-radius: 15%;
-    border: 1px solid white;
+    border: 1px solid rgb(48, 52, 54);
 }
 
 .planet-item img {

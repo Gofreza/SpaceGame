@@ -1,0 +1,18 @@
+.horizontal-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+textarea {
+    resize: none;
+    text-align: center;
+}
+
+span {
+    margin-top: 5px;
+}
+
+form {
+    text-align: center;
+}

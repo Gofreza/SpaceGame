@@ -6,6 +6,10 @@ let refiningSteelInProgress = false;
 let refiningComponentsInProgress = false;
 let refiningPlasticInProgress = false;
 
+/*
+    Update resources + refining
+ */
+
 async function updateResources(userId, characterId) {
     try {
         db.getCharacterMinesInfo(characterId, async (err, characterMines) => {
@@ -25,7 +29,7 @@ async function updateResources(userId, characterId) {
                 } else if (mine.mine_id === 2) {
                     // Determine the amount of resources to add based on the mine level
                     // For example, if the mine level is 1, you can add 10 resources per second
-                    const resourcesToAdd = mine.level * 1;
+                    const resourcesToAdd = mine.level * 0.75;
 
                     // Update the character's resources in the database
                     await db.updateCharacterResources(userId, characterId, resourcesToAdd, mine.mine_id);
@@ -154,9 +158,11 @@ function stopRefiningPlastic() {
 function switchRefiningOn() {
     refiningOn = true;
 }
+
 function switchRefiningOff(){
     refiningOn = false;
 }
+
 function isRefiningOn() {
     return refiningOn;
 }
@@ -174,7 +180,13 @@ function isRefiningPlasticOn() {
 }
 
 /*
-    Auto resource function
+    Population
+ */
+
+
+
+/*
+    Auto resource + population function
  */
 
 const activeTimeouts = {}; // Object to store active timeouts

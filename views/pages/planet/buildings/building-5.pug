@@ -1,4 +1,36 @@
 extends ../../../layouts/base
 
+block css
+    link(rel='stylesheet', href='/CSS/buildings/buildings.css')
+    link(rel='stylesheet', href='/CSS/buildings/yard.css')
+
 block layout-content
-    p Index : #{index}
+    .page-container
+        .ship-container
+            .ship-list
+                if ship !== null
+                    each ship in ships
+                        .ship-box
+                            img.ship-image(src=ship.img_src)
+                            .horizontal-container
+                                .ship-info
+                                    each value, key in ship
+                                        if key !== "img_src" && key !== "print_order"
+                                            .ship-property
+                                                if key === "name"
+                                                    span <b><u>#{value}</u></b>
+                                                else
+                                                    span= `${key}: ${value}`
+                                    // Find the costs associated with this ship
+                                    - const shipCosts = costs.find(cost => cost.name === ship.name)
+                                .ship-info
+                                    span
+                                        | <b><u>Building Costs : </u></b>
+                                    if shipCosts
+                                        each val, cle in shipCosts
+                                            if cle !== "name" & cle !== "print_order"
+                                                .ship-property
+                                                    span= `${cle}: ${val}`
+                                    .horizontal-container
+                                        textarea(id=`craft` name="craftArea" rows="1" cols="10" maxlength="6") 1
+                                        button(type="button" id=`buttonCraft`) Craft

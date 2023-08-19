@@ -13,7 +13,7 @@ body {
     background-image: url("/imgs/spacebackground.jpg");
     background-size: cover;
     background-position: center;
-    color: whitesmoke;
+    background-repeat: no-repeat;
 }
 
 .planet-container {
@@ -119,7 +119,7 @@ body {
 .population {
     padding: 5px;
     width: 220px;
-    height: 90px;
+    height: 100px;
     background-color: rgba(6, 8, 16, 0.75);;
     border: solid 2px rgb(48, 52, 54);
 }
