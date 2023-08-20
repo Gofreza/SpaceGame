@@ -175,6 +175,33 @@ function setupDatabase() {
     FOREIGN KEY (name) REFERENCES units_characteristics (name)
     )`)
 
+    db.run(`CREATE TABLE IF NOT EXISTS character_units (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER,
+    small_fighter INTEGER,
+    small_freighter INTEGER,
+    frigate INTEGER,
+    destroyer INTEGER,
+    small_mecha INTEGER,
+    heavy_fighter INTEGER,
+    heavy_freighter INTEGER,
+    cruiser INTEGER,
+    battleship INTEGER,
+    dreadnought INTEGER,
+    colony_ship INTEGER,
+    capital_ship INTEGER,
+    FOREIGN KEY (character_id) REFERENCES characters(id)
+    )`)
+
+    db.run(`CREATE TABLE IF NOT EXISTS character_craft (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    character_id INTEGER,
+    ship_name TEXT,
+    craft_number INTEGER,
+    completion_time INTEGER,
+    FOREIGN KEY (character_id) REFERENCES characters(id)
+    )`)
+
     /*
         FILL TABLES
      */
@@ -436,6 +463,20 @@ function setupDatabase() {
 
                 console.log(`Character ${name} added with ID ${this.lastID}`);
                 callback(null, this.lastID);
+
+                //Insert units
+
+                sql = `INSERT INTO character_units (character_id, small_fighter , small_freighter , frigate , destroyer , small_mecha , heavy_fighter , heavy_freighter , cruiser , battleship , dreadnought , colony_ship , capital_ship) VALUES (?, 5, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)`
+
+                db.run(sql, [this.lastID], (err) => {
+                    if (err) {
+                        console.error('Error inserting default units : ', err.message);
+                    }
+                    else {
+                        console.log('Default units inserted successfully');
+                    }
+                })
+
             });
         }
 
@@ -1117,6 +1158,59 @@ function setupDatabase() {
             })
         }
 
+        async function getCharacteristicsBis(characterId, buildingId) {
+            try {
+                const getLevel = (characterId, buildingId) => {
+                    return new Promise((resolve, reject) => {
+                        const sql = `SELECT level FROM character_buildings WHERE character_id = ? AND building_id = ?`;
+                        db.get(sql, [characterId, buildingId], (err, level) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(level);
+                            }
+                        });
+                    });
+                };
+
+                const {level} = await getLevel(characterId, buildingId);
+                //console.log(level)
+
+                if (level !== 0) {
+                    const getCharacteristics = (buildingId, level) => {
+                        return new Promise((resolve, reject) => {
+                            const sql = `SELECT * FROM building_characteristics WHERE building_id = ? AND level = ?`;
+                            db.get(sql, [buildingId, level], (err, characteristics) => {
+                                if (err) {
+                                    reject(err);
+                                } else {
+                                    resolve(characteristics);
+                                }
+                            });
+                        });
+                    };
+
+                    const characteristics = await getCharacteristics(buildingId, level);
+                    //console.log(characteristics)
+                    if (!characteristics) {
+                        console.log('Character characteristics not found.');
+                        return null;
+                    }
+
+                    return characteristics;
+                }
+                else {
+                    console.log('Error getCharacteristicsBis, building level is 0.');
+                    return null
+                }
+
+            } catch (err) {
+                console.error('Error in getCharacteristics:', err.message);
+                return null;
+            }
+        }
+
+
     /*  =======================
          POPULATION FUNCTIONS
          ======================= */
@@ -1172,6 +1266,48 @@ function setupDatabase() {
 
             callback(null, { current_pop, worker_pop, free_pop });
         }
+
+        async function getCharacterPopulationBis(characterId) {
+            const sqlCurrentPop = `SELECT current_pop FROM character_population WHERE character_id = ?`;
+            const sqlWorkerPop = `SELECT worker_pop FROM character_population WHERE character_id = ?`;
+            const sqlFreePop = `SELECT free_pop FROM character_population WHERE character_id = ?`;
+
+            const [current_pop, worker_pop, free_pop] = await Promise.all([
+                new Promise((resolve, reject) => {
+                    db.get(sqlCurrentPop, [characterId], (err, current_pop) => {
+                        if (err) {
+                            console.error('Error retrieving current_pop:', err.message);
+                            reject(err);
+                        } else {
+                            resolve(current_pop);
+                        }
+                    });
+                }),
+                new Promise((resolve, reject) => {
+                    db.get(sqlWorkerPop, [characterId], (err, worker_pop) => {
+                        if (err) {
+                            console.error('Error retrieving worker_pop:', err.message);
+                            reject(err);
+                        } else {
+                            resolve(worker_pop);
+                        }
+                    });
+                }),
+                new Promise((resolve, reject) => {
+                    db.get(sqlFreePop, [characterId], (err, free_pop) => {
+                        if (err) {
+                            console.error('Error retrieving free_pop:', err.message);
+                            reject(err);
+                        } else {
+                            resolve(free_pop);
+                        }
+                    });
+                })
+            ]);
+
+            return { current_pop, worker_pop, free_pop };
+        }
+
 
         async function getCurrentPop(userId) {
             try {
@@ -1371,12 +1507,58 @@ function setupDatabase() {
             }
         }
 
+        async function subtractPop(population, characterId, value){
+            const updateSql = `UPDATE character_population SET ${population}  = ${population} - ?, current_pop = current_pop - ? WHERE character_id = ?`;
+            await db.run(updateSql, [value, value, characterId], (err) => {
+                if (err) {
+                    console.error('Error subtracting resources:', err.message);
+                } else {
+                    //console.log('Resources updated successfully.');
+                }
+            });
+        }
+
+        async function setFreePopBis(userId, resourceToSet) {
+            try {
+                const character = await new Promise((resolve, reject) => {
+                    findCharacterByUserId(userId, (err, row) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(row);
+                        }
+                    });
+                });
+
+                const sql = `UPDATE character_population SET free_pop = ? WHERE character_id = ?`;
+
+                db.run(sql, [resourceToSet, character.id], (err) => {
+                    if (err) {
+                        console.error('Error updating free_pop:', err.message);
+                    }
+                });
+            } catch (err) {
+                console.error('Error in setFreePop:', err.message);
+            }
+        }
+
+
         async function updatePopulation(userId) {
             try {
                 const {current_pop} = await getCurrentPop(userId);
 
                 const { worker_pop } = await new Promise((resolve, reject) => {
                     getWorkerPop(userId, (err, workerPop) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(workerPop);
+                        }
+                    });
+                });
+
+                const { free_pop } = await new Promise((resolve, reject) => {
+                    getFreePop(userId, (err, workerPop) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -1429,6 +1611,9 @@ function setupDatabase() {
                         await setFreePop(userId, 0.1);
                     }
                 }
+                if (free_pop > current_pop * (3/4) ) {
+                    await setFreePopBis(userId, current_pop * (3/4));
+                }
             } catch (err) {
                 console.error('Error in updatePopulation:', err.message);
             }
@@ -1479,11 +1664,98 @@ function setupDatabase() {
                 db.get(sql, [name], (err, costs) => {
                     if (err) {
                         console.error("Error getUnitsCosts:", err.message);
+                        reject(err)
                     } else {
                         resolve(costs)
                     }
                 })
             })
+        }
+
+        async function getUnitsNumber(characterId) {
+            const sql = `SELECT SUM(small_fighter + small_freighter + frigate + destroyer + small_mecha + heavy_fighter +  heavy_freighter + cruiser + battleship + dreadnought + colony_ship + capital_ship) AS nb_ships FROM character_units WHERE character_id = ?`
+
+            return new Promise((resolve, reject) => {
+                db.get(sql, [characterId], (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving units number:', err.message);
+                        reject(err);
+                    } else {
+                        const nbShips = row ? row.nb_ships : 0;
+                        resolve(nbShips);
+                    }
+                });
+            });
+        }
+
+        async function addUnit(unit, unitToAdd, characterId) {
+
+            const characteristics = await getCharacteristicsBis(characterId, 5)
+            if (characteristics !== null) {
+                //console.log(characteristics)
+
+                //Calcul ship number
+                const nb_ships = await getUnitsNumber(characterId)
+
+                if (nb_ships + unitToAdd <= characteristics.ship_capacity) {
+                    console.log(nb_ships, unitToAdd, characteristics.ship_capacity)
+                    console.log("Ok")
+                    console.log(unit, unitToAdd, characterId)
+                    const sql = `UPDATE character_units SET \`${unit}\` = \`${unit}\` + ? WHERE character_id = ?`
+
+                    db.run(sql, [unitToAdd, characterId], (err) => {
+                        if (err) {
+                            console.error("Error addUnit:", err.message)
+                        }
+                    })
+
+                    return "Unit added"
+                }
+                else {
+                    //console.error("Not ok")
+                    return "Not enough place in the Space Hangar !"
+                }
+
+            }
+            else {
+                return "Error, Space Hangar building level is 0"
+            }
+
+        }
+
+        async function addCraftToCharacter(characterId, shipName, craftNumber, completionTime) {
+            const sql = `INSERT INTO character_craft (character_id, ship_name, craft_number, completion_time) VALUES (?, ?, ?, ?)`
+
+            db.run(sql, [characterId, shipName, craftNumber, completionTime], (err) => {
+                if (err) {
+                    console.error("Error addCraftToCharacter: ", err.message)
+                }
+            })
+        }
+
+        async function deleteCraftFromCharacter(characterId, shipName) {
+            const sql = `DELETE FROM character_craft WHERE character_id = ? AND ship_name = ?`
+
+            db.run(sql, [characterId, shipName], (err) => {
+                if (err) {
+                    console.error("Error deleteCraftFromCharacter:", err.message)
+                }
+            })
+        }
+
+        async function getCraftFromCharacter(characterId) {
+            const sql = `SELECT * FROM character_craft WHERE character_id = ?`
+
+            return new Promise((resolve, reject) => {
+                db.all(sql, [characterId], (err, rows) => {
+                    if (err) {
+                        console.error('Error retrieving units number:', err.message);
+                        reject(err);
+                    } else {
+                        resolve(rows);
+                    }
+                });
+            });
         }
 
     return {
@@ -1498,13 +1770,13 @@ function setupDatabase() {
         //Mines
         updateMineLevel, getCharacterMinesInfo, getMineData, getMineLevelUpCost,
         //Characteristics
-        getCharacteristics,
+        getCharacteristics, getCharacteristicsBis,
         //Populations
-        getCharacterPopulation, getCurrentPop, getWorkerPop, getFreePop, setCurrentPop, setWorkerPop, setFreePop, updatePopulation,
+        getCharacterPopulation, getCharacterPopulationBis, getCurrentPop, getWorkerPop, getFreePop, subtractPop, updatePopulation,
         //Selling
         getSellingPrice,
         //Units
-        getUnitsCharacteristics, getUnitsCosts
+        getUnitsCharacteristics, getUnitsCosts, getUnitsNumber, addUnit, addCraftToCharacter, deleteCraftFromCharacter, getCraftFromCharacter
     };
 }
 

@@ -3,82 +3,83 @@ extends ../layouts/base
 block css
     link(rel='stylesheet', href='/CSS/main.css')
 block layout-content
-    .container-main
-        .planet-container
-            .moon
-        .content
-            .profil-info
-                p #{name} [ Level : #{level} | Combat : #{combat_stat} | Industry : #{industry_stat} | Technology : #{technology_stat} ]
-            .align-horizontaly
-                div
-                    .character-container
-                        img(src=imgUrl, alt='Image Description')
-                    .character-name
-                        p
-                            a(href="/profile") Account
-                div
-                    .buttons
-                        button(class="button" onclick="window.location.href='/planet-menu'") Planet
-                        button(class="button") Army
-                        button(class="button") Star Map
-                div
-                    .resources
+    .page-container
+        .container-main
+            .planet-container
+                .moon
+            .content
+                .profil-info
+                    p #{name} [ Level : #{level} | Combat : #{combat_stat} | Industry : #{industry_stat} | Technology : #{technology_stat} ]
+                .align-horizontaly
+                    div
+                        .character-container
+                            img(src=imgUrl, alt='Image Description')
+                        .character-name
+                            p
+                                a(href="/profile") Account
+                    div
+                        .buttons
+                            button(class="button" onclick="window.location.href='/planet-menu'") Planet
+                            button(class="button") Army
+                            button(class="button") Star Map
+                    div
+                        .resources
+                            table
+                                tr
+                                    td Iron :
+                                    td#iron #{resources.iron}
+                                tr
+                                    td Steel :
+                                    td#steel #{resources.steel}
+                                tr
+                                    td Copper :
+                                    td#copper #{resources.copper}
+                                tr
+                                    td Component :
+                                    td#components #{resources.components}
+                                tr
+                                    td Petrol :
+                                    td#petrol #{resources.petrol}
+                                tr
+                                    td Plastic :
+                                    td#plastic #{resources.plastic}
+                                tr
+                                    td Money :
+                                    td#money #{resources.money}
+                                tr
+                                    td Crystal :
+                                    td#crystal #{resources.crystal}
+                    .refining
+                        .buttons
+                            p Refining
+                                a(href="/building-page/7") &#x2192;
+                            form(id=`startForm` action="/refining" method="POST")
+                                input(type="hidden" name="progress" value="start")
+                                button(type="button" id=`buttonStart`) Start All
+                            form(id=`stopForm` action="/refining" method="POST")
+                                input(type="hidden" name="progress" value="stop")
+                                button(type="button" id=`buttonStop`) Stop All
+                        - if (refiningStatus === "on")
+                            .refining-status-box.on
+                                span ON
+                        - else
+                            .refining-status-box.off
+                                span OFF
+                    .population
                         table
                             tr
-                                td Iron :
-                                td#iron #{resources.iron}
+                                td Population
                             tr
-                                td Steel :
-                                td#steel #{resources.steel}
+                                td Current Pop :
+                                td#currentPop #{population.current_pop.current_pop}
+                                td / #{maxPop}
                             tr
-                                td Copper :
-                                td#copper #{resources.copper}
+                                td Worker Pop :
+                                td#workerPop #{population.worker_pop.worker_pop}
                             tr
-                                td Component :
-                                td#components #{resources.components}
-                            tr
-                                td Petrol :
-                                td#petrol #{resources.petrol}
-                            tr
-                                td Plastic :
-                                td#plastic #{resources.plastic}
-                            tr
-                                td Money :
-                                td#money #{resources.money}
-                            tr
-                                td Crystal :
-                                td#crystal #{resources.crystal}
-                .refining
-                    .buttons
-                        p Refining
-                            a(href="/building-page/7") &#x2192;
-                        form(id=`startForm` action="/refining" method="POST")
-                            input(type="hidden" name="progress" value="start")
-                            button(type="button" id=`buttonStart`) Start All
-                        form(id=`stopForm` action="/refining" method="POST")
-                            input(type="hidden" name="progress" value="stop")
-                            button(type="button" id=`buttonStop`) Stop All
-                    - if (refiningStatus === "on")
-                        .refining-status-box.on
-                            span ON
-                    - else
-                        .refining-status-box.off
-                            span OFF
-                .population
-                    table
-                        tr
-                            td Population
-                        tr
-                            td Current Pop :
-                            td#currentPop #{population.current_pop.current_pop}
-                            td / #{maxPop}
-                        tr
-                            td Worker Pop :
-                            td#workerPop #{population.worker_pop.worker_pop}
-                        tr
-                            td Free Pop :
-                            td#freePop #{population.free_pop.free_pop}
-                .content
+                                td Free Pop :
+                                td#freePop #{population.free_pop.free_pop}
+                    .content
     script(src="/JS/resources.js")
     script(src="/JS/population.js")
     script.

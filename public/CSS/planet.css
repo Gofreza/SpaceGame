@@ -10,7 +10,8 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url("/imgs/planet_background.jpg") center/cover;
+    background: url("/imgs/planet_background.jpg") fixed center;
+    background-size: cover;
 }
 
 .square-container {

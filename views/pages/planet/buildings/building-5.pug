@@ -32,5 +32,101 @@ block layout-content
                                                 .ship-property
                                                     span= `${cle}: ${val}`
                                     .horizontal-container
-                                        textarea(id=`craft` name="craftArea" rows="1" cols="10" maxlength="6") 1
-                                        button(type="button" id=`buttonCraft`) Craft
+                                        form(id=`craftForm-${ship.name}` data-ship-name=`${ship.name}` action="/crafting" method="POST")
+                                            textarea(id=`craft-${ship.name}` name="craftArea" rows="1" cols="10" maxlength="6") 1
+                                            input(type="hidden" name="costs" value=shipCosts)
+                                            button(type="button" class="buttonCraft" id=`buttonCraft-${ship.name}`) Craft
+                                    .horizontal-container
+                                        span(id=`timer-${ship.name}` style="display:none;") Timer: &nbsp;
+                                        span(id=`countdown-${ship.name}`)
+        .resources-container
+            .resources
+                table
+                    tr
+                        td Iron :
+                        td#iron #{resources.iron}
+                    tr
+                        td Steel :
+                        td#steel #{resources.steel}
+                    tr
+                        td Copper :
+                        td#copper #{resources.copper}
+                    tr
+                        td Component :
+                        td#components #{resources.components}
+                    tr
+                        td Petrol :
+                        td#petrol #{resources.petrol}
+                    tr
+                        td Plastic :
+                        td#plastic #{resources.plastic}
+                    tr
+                        td Money :
+                        td#money #{resources.money}
+                    tr
+                        td Crystal :
+                        td#crystal #{resources.crystal}
+            .population
+                table
+                    tr
+                        td Population
+                    tr
+                        td Current Pop :
+                        td#currentPop #{population.current_pop.current_pop}
+                    tr
+                        td Worker Pop :
+                        td#workerPop #{population.worker_pop.worker_pop}
+                    tr
+                        td Free Pop :
+                        td#freePop #{population.free_pop.free_pop}
+    script(src="/JS/resources.js")
+    script(src="/JS/population.js")
+    script.
+        document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('click', (event) => {
+                if (event.target.classList.contains('buttonCraft')) {
+                    const shipName = event.target.parentElement.getAttribute('data-ship-name');
+                    //console.log("name", shipName)
+                    const formId = `craftForm-${shipName}`;
+                    document.getElementById(formId).submit();
+                }
+            });
+
+            // JavaScript code to calculate and display countdowns
+            const data = !{JSON.stringify(crafts)}; // Replace 'craftingData' with your data
+            data.forEach(item => {
+                const completionTime = new Date(item.completion_time);
+                const now = new Date();
+
+                let timeRemaining = completionTime - now;
+
+                const countdownElement = document.getElementById(`countdown-${item.ship_name}`);
+                const timerElement = document.getElementById(`timer-${item.ship_name}`);
+                let interval;
+
+                const updateCounter = () => {
+                    const remainingDuration = new Date(timeRemaining);
+
+                    const hours = remainingDuration.getUTCHours();
+                    const minutes = remainingDuration.getUTCMinutes();
+                    const seconds = remainingDuration.getUTCSeconds();
+
+                    if (timeRemaining <= 0) {
+                        clearInterval(interval);
+                        countdownElement.innerHTML = 'Crafting Complete';
+                    }else {
+                        countdownElement.innerHTML = `${hours}h ${minutes}m ${seconds}s`;
+                        timerElement.style.display = 'inline';
+                    }
+
+                    timeRemaining -= 1000;
+                };
+
+                updateCounter();
+                interval = setInterval(updateCounter, 1000);
+            });
+
+        });
+
+
+

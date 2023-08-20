@@ -26,9 +26,10 @@
     gap: 20px;
 }
 .ship-info {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     flex-direction: column;
+    padding: 2px;
 }
 .ship-property {
     display: flex;
@@ -42,13 +43,32 @@
 .horizontal-container {
     display: flex;
 }
+
+form {
+    padding-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 textarea {
-    margin-top: 10px;
     resize: none;
     text-align: center;
 }
 
 button  {
-    margin-top: 10px;
     margin-left: 5px;
+}
+
+.resources-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.population {
+    padding: 5px;
+    width: 200px;
+    height: 100px;
+    background-color: rgba(6, 8, 16, 0.75);;
+    border: solid 2px rgb(48, 52, 54);
 }

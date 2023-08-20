@@ -5,6 +5,12 @@ const {requireAuth, requireNotAuth, levelUpBuilding, levelUpMine, showBuildingPa
 const database = require('../database')
 const {isRefiningOn, isRefiningSteelOn, isRefiningComponentsOn, isRefiningPlasticOn} = require("../updateResources");
 const db = database()
+const craftingRequests = [];
+
+function transformToUnderscoreCase(inputString) {
+    // Convert the string to lowercase and replace spaces with underscores
+    return inputString.toLowerCase().replace(/ /g, '_');
+}
 
 router.get('/building-page/:index', requireAuth, async (req, res) => {
     const flashMessages = req.flash(); // Retrieve flash messages from the session
@@ -28,6 +34,7 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
     const characterId = req.session.characterId
 
     const resources = await db.getResourcesForCharacterBis(characterId)
+    const totalPopulation = await db.getCharacterPopulationBis(characterId)
 
     let smeltingRates = [];
 
@@ -128,7 +135,7 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
     //For the Space Yard
     else if (index === 5) {
 
-        await db.getCharacterBuildingInfo(characterId, (err, characterBuildings) => {
+        await db.getCharacterBuildingInfo(characterId, async (err, characterBuildings) => {
             if (err) {
                 console.log("Error getCharacterBuildingInfo : can't get buildings info")
             }
@@ -143,6 +150,22 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
                 //The Space Yard of course, yes it's different i don't know where
                 //I made a mistake
                 if (buildingId === 6) {
+
+                    //Check if crafts are finished (after log out the craftingRequests is empty so need to check with the db)
+                    const crafts = await db.getCraftFromCharacter(characterId)
+                    //console.log(crafts)
+                    if (crafts) {
+                        crafts.forEach(craft => {
+                            const craftingRequest = {
+                                userId: craft.id,
+                                shipType: craft.ship_name,
+                                craftNumber: craft.craft_number,
+                                characterId: craft.character_id,
+                                completionTime: craft.completion_time,
+                            };
+                            craftingRequests.push(craftingRequest);
+                        })
+                    }
 
                     //Getting the ships the player have access to
                     db.getCharacteristics(userId, buildingId, async (err, characteristics) => {
@@ -179,6 +202,9 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
                             units_costs.sort((a, b) => a.print_order - b.print_order);
                             //console.log(units_costs)
 
+                            //Getting craft timer is there are
+                            const crafts = await db.getCraftFromCharacter(characterId)
+
                             res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
                                 title: title,
                                 flash: flashMessages,
@@ -186,20 +212,21 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
                                 resources: resources,
                                 ships: unit_characteristics,
                                 costs: units_costs,
+                                population: totalPopulation,
+                                crafts: crafts,
                                 showMenuBar: true
                             });
-                        }
-                        else {
+                        } else {
                             res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
                                 title: title,
                                 flash: flashMessages,
                                 index: index,
                                 resources: resources,
                                 ship: null,
+                                population: totalPopulation,
                                 showMenuBar: true
                             });
                         }
-
 
                     })
 
@@ -357,5 +384,117 @@ router.post('/sell', requireAuth, async (req, res) => {
     res.redirect('/building-page/3')
 
 })
+router.post('/crafting', requireAuth, async (req, res) => {
+    const formData = req.body
+    const characterId = req.session.characterId
+
+    const costsObject = JSON.parse(formData.costs);
+    const craftNumber = JSON.parse(formData.craftArea)
+
+    const characteristics = await db.getCharacteristicsBis(characterId, 5)
+    if (characteristics !== null) {
+        //console.log(characteristics)
+
+        //Calcul ship number
+        const nb_ships = await db.getUnitsNumber(characterId)
+
+        //Can craft
+        if (nb_ships + craftNumber <= characteristics.ship_capacity) {
+            // Access individual properties
+            const name = costsObject.name;
+            const steel = parseInt(costsObject.steel, 10) * craftNumber;
+            const components = parseInt(costsObject.components, 10) * craftNumber;
+            const plastic = parseInt(costsObject.plastic, 10) * craftNumber;
+            const money = parseInt(costsObject.money, 10) * craftNumber;
+            const population = parseInt(costsObject.population, 10) * craftNumber;
+
+            const resources = await db.getResourcesForCharacterBis(characterId)
+            const totalPopulation = await db.getCharacterPopulationBis(characterId)
+
+            //console.log("pop", totalPopulation)
+
+            //Enough resources
+            if (resources.steel >= steel && resources.components >= components && resources.plastic >= plastic && resources.money >= money) {
+                const {free_pop} = totalPopulation.free_pop
+
+                //Enough freePop
+                if (free_pop >= population) {
+
+                    //Deleting resources
+                    await db.subtractResourceInDatabase("steel", steel, characterId)
+                    await db.subtractResourceInDatabase("components", components, characterId)
+                    await db.subtractResourceInDatabase("plastic", plastic, characterId)
+                    await db.subtractResourceInDatabase("money", money, characterId)
+
+                    await db.subtractPop("free_pop", characterId, population)
+
+                    //Getting ending date
+                    const unitsCharacteristics = await db.getUnitsCharacteristics(name)
+
+                    const craftingTime = unitsCharacteristics.crafting_time
+                    const time = parseInt(craftingTime.replace(" ", "")) * craftNumber
+
+                    const craftingRequest = {
+                        userId: req.session.userId,
+                        shipType: name,
+                        craftNumber: craftNumber,
+                        characterId: characterId,
+                        completionTime: Date.now() + time,
+                    };
+
+                    await db.addCraftToCharacter(characterId, name, craftNumber, Date.now() + time)
+
+                    req.flash('success', "Construction began")
+                    craftingRequests.push(craftingRequest);
+                }
+                //Not enough freePop so going with workerPop
+                else if (totalPopulation.worker_pop >= population) {
+                    console.log("Enough pop worker")
+                }
+                //Not enough population
+                else {
+                    req.flash('error', `Insufficient population`)
+                }
+
+            }
+            //Not enough resources
+            else{
+                req.flash('error', `Insufficient resources`)
+            }
+        }
+        //Cannot
+        else {
+            req.flash('error', "Not enough place in the Space Hangar")
+        }
+    }
+
+    res.redirect('building-page/5')
+})
+
+const completedRequests = new Set();
+
+//Interval for crafts timer
+setInterval(async () => {
+    const currentTime = Date.now();
+
+    for (const request of craftingRequests) {
+        const requestIdentifier = `${request.shipType}-${request.characterId}`;
+
+        if (currentTime >= request.completionTime && !completedRequests.has(requestIdentifier)) {
+            // Craft the ship and update user's inventory
+            const message = await db.addUnit(transformToUnderscoreCase(request.shipType), request.craftNumber, request.characterId);
+
+            // Add the request identifier to the Set of completed requests
+            completedRequests.add(requestIdentifier);
+
+            // Remove the crafting request
+            const index = craftingRequests.indexOf(request);
+            craftingRequests.splice(index, 1);
+            await db.deleteCraftFromCharacter(request.characterId, request.shipType);
+        }
+    }
+}, 1000);
+
+
 
 module.exports = router;

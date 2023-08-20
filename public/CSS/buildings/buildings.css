@@ -1,6 +1,6 @@
 body {
     width: 100%;
-    background: transparent;
+    background: transparent fixed;
 }
 
 html {
@@ -10,7 +10,8 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url("/imgs/industry_background.jpg") center/cover;
+    background: url("/imgs/industry_background.jpg") fixed center;
+    background-size: cover;
 }
 
 .building-container {

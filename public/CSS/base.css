@@ -10,7 +10,8 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: url("/imgs/spacestation_background.jpg") center/cover;
+    background: url("/imgs/spacestation_background.jpg") fixed center;
+    background-size: cover;
 }
 
 .circle-container {
