@@ -495,6 +495,4 @@ setInterval(async () => {
     }
 }, 1000);
 
-
-
 module.exports = router;

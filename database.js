@@ -274,9 +274,9 @@ function setupDatabase() {
          ======================= */
 
         async function isIntegerOrFloat(value) {
-        const parsedValue = parseFloat(value);
-        return Number.isInteger(parsedValue) ? parsedValue : parsedValue.toFixed(1);
-    }
+            const parsedValue = parseFloat(value);
+            return Number.isInteger(parsedValue) ? parsedValue : parsedValue.toFixed(1);
+        }
 
     /*  =======================
          USER FUNCTIONS

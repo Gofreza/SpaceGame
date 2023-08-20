@@ -1,0 +1,170 @@
+@import "variables";
+
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  color: whitesmoke;
+  background-attachment: fixed;
+}
+
+a:visited, a:link {
+  color: white;
+}
+
+#flash-messages {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px;
+  background-color: #333;
+  color: #fff;
+  border-radius: 4px;
+  display: none;
+  z-index: 10000;
+}
+
+/*
+    MENU
+ */
+
+.menu {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: $menu-height;
+  display: flex;
+  align-items: center;
+  background-color: #060810;
+  color: inherit;
+  padding: 10px;
+  margin-bottom: 10px;
+  position: fixed;
+  z-index: 1000;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: rgb(48, 52, 54);
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 12px 16px;
+  text-decoration: none;
+  width: auto;
+  color: #333;
+}
+
+.menu-item:hover .dropdown-content {
+  display: block;
+}
+
+.menu-item {
+  position: relative;
+  margin-right: 10px;
+  padding: 10px;
+  text-decoration: none;
+  color: #fff;
+  background-color: #555;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+.menu-item:hover, .dropdown-item:hover{
+  background-color: #777;
+}
+
+.resources {
+  padding: 5px;
+  width: 200px;
+  height: 180px;
+  background-color: rgba(6, 8, 16, 0.75);;
+  border: solid 2px rgb(48, 52, 54);
+}
+
+/*
+ Planet + base info box
+ */
+
+.info-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgb(48, 52, 54);
+  color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  white-space: pre-line;
+}
+
+.info-content {
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: -25px;
+  right: -5px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.pointer-cursor:hover {
+  cursor: pointer;
+}
+
+.caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  color: #fff;
+  padding: 5px;
+  text-align: center;
+}
+
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-bottom: 10px;
+  padding-top: $menu-height + 40px;
+}
+
+/*
+    Refining on
+ */
+
+.refining-status-box {
+  width: 50px;
+  height: 30px;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-top: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.on {
+  background-color: green;
+}
+
+.off {
+  background-color: red;
+}

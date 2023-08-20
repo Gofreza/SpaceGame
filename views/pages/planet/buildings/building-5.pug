@@ -6,41 +6,69 @@ block css
 
 block layout-content
     .page-container
-        .ship-container
+        .ship-container#reference-div
             .ship-list
                 if ship !== null
                     each ship in ships
                         .ship-box
-                            img.ship-image(src=ship.img_src)
-                            .horizontal-container
-                                .ship-info
-                                    each value, key in ship
-                                        if key !== "img_src" && key !== "print_order"
-                                            .ship-property
-                                                if key === "name"
-                                                    span <b><u>#{value}</u></b>
-                                                else
-                                                    span= `${key}: ${value}`
-                                    // Find the costs associated with this ship
-                                    - const shipCosts = costs.find(cost => cost.name === ship.name)
-                                .ship-info
-                                    span
-                                        | <b><u>Building Costs : </u></b>
-                                    if shipCosts
-                                        each val, cle in shipCosts
-                                            if cle !== "name" & cle !== "print_order"
-                                                .ship-property
-                                                    span= `${cle}: ${val}`
-                                    .horizontal-container
-                                        form(id=`craftForm-${ship.name}` data-ship-name=`${ship.name}` action="/crafting" method="POST")
-                                            textarea(id=`craft-${ship.name}` name="craftArea" rows="1" cols="10" maxlength="6") 1
-                                            input(type="hidden" name="costs" value=shipCosts)
-                                            button(type="button" class="buttonCraft" id=`buttonCraft-${ship.name}`) Craft
-                                    .horizontal-container
-                                        span(id=`timer-${ship.name}` style="display:none;") Timer: &nbsp;
-                                        span(id=`countdown-${ship.name}`)
+                            table
+                                tr
+                                    td
+                                        img.ship-image(src=ship.img_src)
+                                    td
+                                        .ship-info
+                                            each value, key in ship
+                                                if key !== "img_src" && key !== "print_order"
+                                                    .ship-property
+                                                        case key
+                                                            when "name"
+                                                                span <b><u>#{value}</u></b>
+                                                            when "life"
+                                                                span PV: #{value}
+                                                            when "armor"
+                                                                span Armor: #{value}
+                                                            when "shield"
+                                                                span Shield: #{value}
+                                                            when "storage_capacity"
+                                                                span Hold Capacity: #{value}
+                                                            when "speed"
+                                                                span Speed: #{value}
+                                                            when "damage"
+                                                                span Damage: #{value}
+                                                            when "crafting_time"
+                                                                - const craftingTime = parseInt(value)/60
+                                                                span Build Time: #{craftingTime} min
+                                        // Find the costs associated with this ship
+                                        - const shipCosts = costs.find(cost => cost.name === ship.name)
+                                    td
+                                        .ship-info
+                                            span
+                                                | <b><u>Building Costs : </u></b>
+                                            if shipCosts
+                                                each val, cle in shipCosts
+                                                    case cle
+                                                        when "steel"
+                                                            span Steel: #{val}
+                                                        when "components"
+                                                            span Components: #{val}
+                                                        when "plastic"
+                                                            span Plastic: #{val}
+                                                        when "money"
+                                                            span Money: #{val}
+                                                        when "population"
+                                                            span Population: #{val}
+                                        .horizontal-container
+                                            form(id=`craftForm-${ship.name}` data-ship-name=`${ship.name}` action="/crafting" method="POST")
+                                                textarea(id=`craft-${ship.name}` name="craftArea" rows="1" cols="10" maxlength="6") 1
+                                                input(type="hidden" name="costs" value=shipCosts)
+                                                button(type="button" class="buttonCraft" id=`buttonCraft-${ship.name}`) Craft
+                            .timer-container
+                                span(id=`timer-${ship.name}` style="display:none;") Timer: &nbsp;
+                                span(id=`countdown-${ship.name}` style="display:none;")
+
         .resources-container
-            .resources
+            .to-fixe
+            .resources#fixedResources
                 table
                     tr
                         td Iron :
@@ -66,7 +94,7 @@ block layout-content
                     tr
                         td Crystal :
                         td#crystal #{resources.crystal}
-            .population
+            .population#fixedPopulation
                 table
                     tr
                         td Population
@@ -102,6 +130,7 @@ block layout-content
 
                 const countdownElement = document.getElementById(`countdown-${item.ship_name}`);
                 const timerElement = document.getElementById(`timer-${item.ship_name}`);
+
                 let interval;
 
                 const updateCounter = () => {
@@ -116,7 +145,10 @@ block layout-content
                         countdownElement.innerHTML = 'Crafting Complete';
                     }else {
                         countdownElement.innerHTML = `${hours}h ${minutes}m ${seconds}s`;
+                        countdownElement.style.display = 'inline'
+                        countdownElement.style.paddingTop = '10px'
                         timerElement.style.display = 'inline';
+                        timerElement.style.paddingTop = '10px'
                     }
 
                     timeRemaining -= 1000;
@@ -125,6 +157,39 @@ block layout-content
                 updateCounter();
                 interval = setInterval(updateCounter, 1000);
             });
+            // Get a reference to the reference div and the fixed div
+            const referenceDiv = document.getElementById("reference-div");
+            const fixedDivResources = document.getElementById("fixedResources");
+            const fixedDivPopulation = document.getElementById("fixedPopulation");
+
+            // Calculate the position of the fixed div based on the reference div
+            function calculateFixedDivPosition() {
+                // Get the position of the reference div
+                const referenceDivRect = referenceDiv.getBoundingClientRect();
+                const resourcesDivRect = fixedDivResources.getBoundingClientRect()
+
+                // Calculate the position for the fixed div
+                const fixedDivResourcesTop = referenceDivRect.top + window.scrollY;
+                const fixedDivResourcesRight = referenceDivRect.left + window.scrollY;
+
+                const fixedDivPopulationTop = resourcesDivRect.bottom + window.scrollY;
+                const fixedDivPopulationRight = referenceDivRect.left + window.scrollY;
+
+                // Apply the calculated position to the fixed div
+                fixedDivResources.style.top = fixedDivResourcesTop + "px";
+                fixedDivResources.style.right = fixedDivResourcesRight + "px";
+
+                fixedDivPopulation.style.top = fixedDivPopulationTop + "px";
+                fixedDivPopulation.style.right = fixedDivPopulationRight + "px";
+
+            }
+
+            // Call the function to calculate the initial position
+            calculateFixedDivPosition();
+
+            // Add an event listener to re-calculate the position if the window is resized
+            window.addEventListener("resize", calculateFixedDivPosition);
+
 
         });
 
