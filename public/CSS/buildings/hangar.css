@@ -1,0 +1,33 @@
+.building-container-extensive {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 800px;
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border: 2px solid rgb(48, 52, 54);
+    background-color: rgba(6, 8, 16, 0.75);
+}
+.ship-image {
+    max-width: 200px;
+    max-height: 150px;
+}
+.ship-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px; /* Add spacing between rows if desired */
+}
+
+.ship-cell {
+    width: calc(20% - 10px); /* Adjust the width as needed for multiple ships per row */
+    text-align: center;
+    vertical-align: top; /* Adjust as needed */
+    margin: 20px;
+    border: 1px solid #ccc; /* Add borders if desired */
+}
+

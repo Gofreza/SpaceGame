@@ -11,6 +11,16 @@ function transformToUnderscoreCase(inputString) {
     // Convert the string to lowercase and replace spaces with underscores
     return inputString.toLowerCase().replace(/ /g, '_');
 }
+function transformToName(key) {
+    // Split the key into words using underscores as separators
+    const words = key.split('_');
+
+    // Capitalize the first letter of each word
+    const capitalizedWords = words.map(word => word.charAt(0).toUpperCase() + word.slice(1));
+
+    // Join the words back together with spaces
+    return capitalizedWords.join(' ');
+}
 
 router.get('/building-page/:index', requireAuth, async (req, res) => {
     const flashMessages = req.flash(); // Retrieve flash messages from the session
@@ -124,11 +134,32 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
     }
     //For the Space Hangar
     else if (index === 4) {
+
+        const characteristics = await db.getCharacteristicsBis(characterId, 5)
+        const nb_ships = await db.getUnitsNumber(characterId)
+
+        const unitsCharacteristics = [];
+        const unitsNumber = await db.getUnits(characterId)
+        const keys = Object.keys(unitsNumber);
+
+        for (const key of keys) {
+            const value = unitsNumber[key];
+            if (key !== "id" && key !== "character_id"){
+                const characteristic = await db.getUnitsCharacteristics(transformToName(key))
+                unitsCharacteristics.push(characteristic)
+            }
+        }
+
+        //console.log(unitsCharacteristics)
+
         res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
             title: title,
             flash: flashMessages,
             index: index,
-            resources: resources,
+            unitsNumber: unitsNumber,
+            unitsCharacteristics: unitsCharacteristics,
+            nbShips: nb_ships,
+            maxShips: characteristics.ship_capacity,
             showMenuBar: true
         });
     }
@@ -449,7 +480,32 @@ router.post('/crafting', requireAuth, async (req, res) => {
                 }
                 //Not enough freePop so going with workerPop
                 else if (totalPopulation.worker_pop >= population) {
-                    console.log("Enough pop worker")
+                    //Deleting resources
+                    await db.subtractResourceInDatabase("steel", steel, characterId)
+                    await db.subtractResourceInDatabase("components", components, characterId)
+                    await db.subtractResourceInDatabase("plastic", plastic, characterId)
+                    await db.subtractResourceInDatabase("money", money, characterId)
+
+                    await db.subtractPop("worker_pop", characterId, population)
+
+                    //Getting ending date
+                    const unitsCharacteristics = await db.getUnitsCharacteristics(name)
+
+                    const craftingTime = unitsCharacteristics.crafting_time
+                    const time = parseInt(craftingTime.replace(" ", "")) * craftNumber
+
+                    const craftingRequest = {
+                        userId: req.session.userId,
+                        shipType: name,
+                        craftNumber: craftNumber,
+                        characterId: characterId,
+                        completionTime: Date.now() + time,
+                    };
+
+                    await db.addCraftToCharacter(characterId, name, craftNumber, Date.now() + time)
+
+                    req.flash('success', "Construction began")
+                    craftingRequests.push(craftingRequest);
                 }
                 //Not enough population
                 else {

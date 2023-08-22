@@ -1,4 +1,20 @@
 extends ../../../layouts/base
 
+block css
+    link(rel='stylesheet', href='/CSS/buildings/buildings.css')
+    link(rel='stylesheet', href='/CSS/buildings/hangar.css')
 block layout-content
-    p Index : #{index}
+    .page-container
+        .building-container-extensive
+            a(href="/building-page/5") To Ships Factory
+            p Hangar Capacity : #{nbShips}/#{maxShips} ships
+            .ship-row
+                each ship in unitsCharacteristics
+                    .ship-cell
+                        img.ship-image(src=ship.img_src)
+                        h3= ship.name
+                        each value, key in unitsNumber
+                            - const originalString = ship.name
+                            - const transformedString = originalString.toLowerCase().replace(/\s+/g, '_');
+                            if key !== "id" && key !== "character_id" && key === transformedString
+                                p #{value}

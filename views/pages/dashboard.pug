@@ -20,7 +20,7 @@ block layout-content
                     div
                         .buttons
                             button(class="button" onclick="window.location.href='/planet-menu'") Planet
-                            button(class="button") Army
+                            button(class="button" onclick="window.location.href='/building-page/4'") Army
                             button(class="button") Star Map
                     div
                         .resources
@@ -49,36 +49,41 @@ block layout-content
                                 tr
                                     td Crystal :
                                     td#crystal #{resources.crystal}
-                    .refining
-                        .buttons
-                            p Refining
-                                a(href="/building-page/7") &#x2192;
-                            form(id=`startForm` action="/refining" method="POST")
-                                input(type="hidden" name="progress" value="start")
-                                button(type="button" id=`buttonStart`) Start All
-                            form(id=`stopForm` action="/refining" method="POST")
-                                input(type="hidden" name="progress" value="stop")
-                                button(type="button" id=`buttonStop`) Stop All
-                        - if (refiningStatus === "on")
-                            .refining-status-box.on
-                                span ON
-                        - else
-                            .refining-status-box.off
-                                span OFF
-                    .population
-                        table
-                            tr
-                                td Population
-                            tr
-                                td Current Pop :
-                                td#currentPop #{population.current_pop.current_pop}
-                                td / #{maxPop}
-                            tr
-                                td Worker Pop :
-                                td#workerPop #{population.worker_pop.worker_pop}
-                            tr
-                                td Free Pop :
-                                td#freePop #{population.free_pop.free_pop}
+                    .clear-content
+                        .refining
+                            .buttons
+                                p Refining
+                                    a(href="/building-page/7") &#x2192;
+                                form(id=`startForm` action="/refining" method="POST")
+                                    input(type="hidden" name="progress" value="start")
+                                    button(type="button" id=`buttonStart`) Start All
+                                form(id=`stopForm` action="/refining" method="POST")
+                                    input(type="hidden" name="progress" value="stop")
+                                    button(type="button" id=`buttonStop`) Stop All
+                            - if (refiningStatus === "on")
+                                .refining-status-box.on
+                                    span ON
+                            - else
+                                .refining-status-box.off
+                                    span OFF
+                        .ships
+                            p Ships : #{nbShips}/#{maxShips}
+                    .clear-content
+                        .population
+                            table
+                                tr
+                                    td Population
+                                tr
+                                    td Current Pop :
+                                    td#currentPop #{population.current_pop.current_pop}
+                                    td / #{maxPop}
+                                tr
+                                    td Worker Pop :
+                                    td#workerPop #{population.worker_pop.worker_pop}
+                                tr
+                                    td Free Pop :
+                                    td#freePop #{population.free_pop.free_pop}
+
                     .content
     script(src="/JS/resources.js")
     script(src="/JS/population.js")

@@ -107,10 +107,18 @@ html {
     gap: 20px;
 }
 
+.clear-content {
+    flex: 1;
+    background-color: #060810;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .refining {
     padding: 5px;
     width: 100px;
-    height: 130px;
+    height: auto;
     background-color: rgba(6, 8, 16, 0.75);;
     border: solid 2px rgb(48, 52, 54);
 }
@@ -118,7 +126,15 @@ html {
 .population {
     padding: 5px;
     width: 220px;
-    height: 100px;
+    height: auto;
+    background-color: rgba(6, 8, 16, 0.75);;
+    border: solid 2px rgb(48, 52, 54);
+}
+
+.ships {
+    padding: 5px;
+    width: 100px;
+    height: auto;
     background-color: rgba(6, 8, 16, 0.75);;
     border: solid 2px rgb(48, 52, 54);
 }

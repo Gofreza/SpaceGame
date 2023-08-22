@@ -3,10 +3,10 @@ extends ../../../layouts/base
 block css
     link(rel='stylesheet', href='/CSS/buildings/buildings.css')
     link(rel='stylesheet', href='/CSS/buildings/yard.css')
-
 block layout-content
     .page-container
         .ship-container#reference-div
+            a(href="/building-page/4") To Space Hangar
             .ship-list
                 if ship !== null
                     each ship in ships

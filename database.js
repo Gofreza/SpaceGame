@@ -1688,6 +1688,21 @@ function setupDatabase() {
             });
         }
 
+        async function getUnits(characterId) {
+            const sql = `SELECT * FROM character_units WHERE character_id = ?`
+
+            return new Promise((resolve, reject) => {
+                db.get(sql, [characterId], (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving units:', err.message);
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+        }
+
         async function addUnit(unit, unitToAdd, characterId) {
 
             const characteristics = await getCharacteristicsBis(characterId, 5)
@@ -1776,7 +1791,7 @@ function setupDatabase() {
         //Selling
         getSellingPrice,
         //Units
-        getUnitsCharacteristics, getUnitsCosts, getUnitsNumber, addUnit, addCraftToCharacter, deleteCraftFromCharacter, getCraftFromCharacter
+        getUnitsCharacteristics, getUnitsCosts, getUnitsNumber, getUnits, addUnit, addCraftToCharacter, deleteCraftFromCharacter, getCraftFromCharacter
     };
 }
 

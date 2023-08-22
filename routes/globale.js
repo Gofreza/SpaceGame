@@ -80,6 +80,10 @@ router.get('/dashboard', requireAuth, async (req, res) => {
                         max_pop = max_pop.population_capacity
                     }
 
+                    const characteristics = await db.getCharacteristicsBis(characterId, 5)
+                    const maxShips = characteristics.ship_capacity
+                    const nb_ships = await db.getUnitsNumber(characterId)
+
                     res.render("../views/pages/dashboard.pug", {
                         title: "Dashboard",
                         flash: flashMessages,
@@ -94,6 +98,8 @@ router.get('/dashboard', requireAuth, async (req, res) => {
                         refiningStatus: refiningStatus,
                         maxPop: max_pop,
                         population: population,
+                        nbShips: nb_ships,
+                        maxShips: maxShips,
                         showMenuBar: true
                     });
                 })
