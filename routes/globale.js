@@ -370,4 +370,14 @@ router.get('/planet', requireAuth, (req, res) => {
     });
 });
 
+router.get('/stars_map', requireAuth, (req, res) => {
+
+    const flashMessages = req.flash(); // Retrieve flash messages from the session
+
+    res.render("../views/pages/stars_map.pug", {
+        title: "Base",
+        flash: flashMessages,
+        showMenuBar: true
+    });
+})
 module.exports = router;

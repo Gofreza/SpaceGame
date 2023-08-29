@@ -1,0 +1,35 @@
+body {
+    width: 100%;
+    background: transparent;
+}
+
+html {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: url("/imgs/stars_map.jpg") fixed center;
+    background-size: cover;
+}
+
+.map-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    height: 700px;
+    border: 2px solid rgb(48, 52, 54);
+    background-color: rgba(6, 8, 16, 0.75);
+    overflow: hidden;
+}
+
+.event {
+    position: absolute;
+    width: 30px; /* Adjust the size of your events */
+    height: 30px;
+    background-color: red; /* Adjust the event appearance */
+}

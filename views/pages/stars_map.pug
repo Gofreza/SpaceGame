@@ -1,0 +1,64 @@
+extends ../layouts/base
+
+block css
+    link(rel='stylesheet', href='/CSS/stars.css')
+block layout-content
+    .page-container
+        .map-container
+            img(src="/imgs/stelar_system.png")
+    script.
+        // Script.js
+        document.addEventListener('DOMContentLoaded', () => {
+            const maxEvents = 5; // Maximum number of events on the map
+            const eventRate = 2500; // Rate at which events appear (in milliseconds)
+            const eventDuration = 25000; // Duration of each event (in milliseconds)
+            const eventQueue = []; // Queue to manage events
+
+            // Define minimum X and Y coordinates
+            const minX = 50; // Minimum X coordinate
+            const minY = 50; // Minimum Y coordinate
+
+            // Function to create a new event with random position
+            function createEvent() {
+                if (eventQueue.length < maxEvents) {
+                    const event = document.createElement('div');
+                    event.className = 'event';
+
+                    // Calculate random X and Y coordinates within the specified range
+                    const maxX = document.querySelector('.map-container').offsetWidth - (event.offsetWidth + 50);
+                    const maxY = document.querySelector('.map-container').offsetHeight - (event.offsetHeight + 50);
+                    const randomX = minX + Math.random() * (maxX - minX);
+                    const randomY = minY + Math.random() * (maxY - minY);
+
+                    // Apply the random coordinates to the event's style
+                    event.style.left = randomX + 'px';
+                    event.style.top = randomY + 'px';
+
+                    // Append the event to the map container
+                    document.querySelector('.map-container').appendChild(event);
+
+                    // Add the event to the queue
+                    eventQueue.push(event);
+
+                    // Set a timeout to remove the event after the specified duration
+                    setTimeout(() => {
+                        event.remove();
+                        // Remove the event from the queue
+                        const eventIndex = eventQueue.indexOf(event);
+                        if (eventIndex !== -1) {
+                            eventQueue.splice(eventIndex, 1);
+                        }
+                    }, eventDuration);
+                }
+            }
+
+            // Function to continuously create events
+            function startEventCreation() {
+                setInterval(() => {
+                    createEvent();
+                }, eventRate);
+            }
+
+            // Start creating events
+            startEventCreation();
+        });
