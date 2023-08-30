@@ -13,16 +13,22 @@ block layout-content
             const eventRate = 2500; // Rate at which events appear (in milliseconds)
             const eventDuration = 25000; // Duration of each event (in milliseconds)
             const eventQueue = []; // Queue to manage events
+            let intervalId = null; // Variable to store the interval ID
+            let timeoutId = null; // Variable to store the timeout ID
 
             // Define minimum X and Y coordinates
             const minX = 50; // Minimum X coordinate
             const minY = 50; // Minimum Y coordinate
 
-            // Function to create a new event with random position
+            // Function to create a new event with random position and info
             function createEvent() {
                 if (eventQueue.length < maxEvents) {
                     const event = document.createElement('div');
                     event.className = 'event';
+
+                    // Generate a unique ID for the event
+                    const eventId = `event-${Date.now()}`;
+                    event.id = eventId;
 
                     // Calculate random X and Y coordinates within the specified range
                     const maxX = document.querySelector('.map-container').offsetWidth - (event.offsetWidth + 50);
@@ -34,6 +40,37 @@ block layout-content
                     event.style.left = randomX + 'px';
                     event.style.top = randomY + 'px';
 
+                    // Add a click event listener to the event
+                    event.addEventListener('click', () => {
+                        console.log(`Event clicked with ID: ${eventId}`);
+                        // You can add custom logic here to handle the click event.
+
+                        // Stop the interval
+                        clearInterval(intervalId);
+
+                        // Clear the timeout
+                        clearTimeout(timeoutId);
+
+                        // Create and display the info page
+                        const infoPage = document.createElement('div');
+                        infoPage.className = 'info-box';
+                        infoPage.style.display = 'block'
+                        infoPage.innerHTML = `<div class="info-content"> <h2>Event Info</h2><p>Event ID: ${eventId}</p> </div>`;
+
+                        document.body.appendChild(infoPage);
+
+                        // Add a close button to the info page
+                        const closeButton = document.createElement('button');
+                        closeButton.textContent = 'Close';
+                        closeButton.addEventListener('click', () => {
+                            infoPage.remove();
+                            // Resume the interval
+                            intervalId = setInterval(createEvent, eventRate);
+                        });
+
+                        infoPage.appendChild(closeButton);
+                    });
+
                     // Append the event to the map container
                     document.querySelector('.map-container').appendChild(event);
 
@@ -41,7 +78,7 @@ block layout-content
                     eventQueue.push(event);
 
                     // Set a timeout to remove the event after the specified duration
-                    setTimeout(() => {
+                    timeoutId = setTimeout(() => {
                         event.remove();
                         // Remove the event from the queue
                         const eventIndex = eventQueue.indexOf(event);
@@ -52,9 +89,9 @@ block layout-content
                 }
             }
 
-            // Function to continuously create events
+            // Function to start creating events
             function startEventCreation() {
-                setInterval(() => {
+                intervalId = setInterval(() => {
                     createEvent();
                 }, eventRate);
             }
@@ -62,3 +99,4 @@ block layout-content
             // Start creating events
             startEventCreation();
         });
+

@@ -202,6 +202,15 @@ function setupDatabase() {
     FOREIGN KEY (character_id) REFERENCES characters(id)
     )`)
 
+    /*db.run(`CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+
+    )`)
+    
+     */
+
+
     /*
         FILL TABLES
      */

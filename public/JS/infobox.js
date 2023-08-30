@@ -6,7 +6,6 @@ function showInfo(index) {
         infoBox.style.display = "block";
         show_limit += 1;
     }
-
 }
 
 function hideInfo(index) {
