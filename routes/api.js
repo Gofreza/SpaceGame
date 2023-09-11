@@ -26,4 +26,16 @@ router.get('/api/population', requireAuth, async (req, res) => {
     });
 })
 
+router.get('/api/events', requireAuth, async (req, res) => {
+    const event = await db.getEvents()
+    res.json(event)
+})
+
+router.get('/api/delevent/:id/:difficulty', requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id)
+    const difficulty = parseInt(req.params.difficulty)
+    await db.deleteEvent(id, difficulty)
+    res.json(200)
+})
+
 module.exports = router;

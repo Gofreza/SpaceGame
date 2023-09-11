@@ -152,6 +152,15 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
 
         //console.log(unitsCharacteristics)
 
+        //Check if crafts are finished (after log out the craftingRequests is empty so need to check with the db)
+        const crafts = await db.getCraftFromCharacter(characterId)
+        //console.log(crafts)
+        let isCraft = false
+
+        if (crafts.length !== 0) {
+            isCraft = true
+        }
+
         res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
             title: title,
             flash: flashMessages,
@@ -160,6 +169,7 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
             unitsCharacteristics: unitsCharacteristics,
             nbShips: nb_ships,
             maxShips: characteristics.ship_capacity,
+            crafts: isCraft,
             showMenuBar: true
         });
     }
@@ -185,6 +195,13 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
                     //Check if crafts are finished (after log out the craftingRequests is empty so need to check with the db)
                     const crafts = await db.getCraftFromCharacter(characterId)
                     //console.log(crafts)
+
+                    let isCraft = false
+
+                    if (crafts.length !== 0) {
+                        isCraft = true
+                    }
+
                     if (crafts) {
                         crafts.forEach(craft => {
                             const craftingRequest = {
@@ -198,7 +215,10 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
                         })
                     }
 
+                    const max_ships = await db.getCharacteristicsBis(characterId, 5)
+
                     //Getting the ships the player have access to
+                    //That's ugly need to change it for the bis
                     db.getCharacteristics(userId, buildingId, async (err, characteristics) => {
                         if (err) {
                             console.log("Error getCharacterBuildingInfo : can't get building characteristics")
@@ -235,6 +255,7 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
 
                             //Getting craft timer is there are
                             const crafts = await db.getCraftFromCharacter(characterId)
+                            const nb_ships = await db.getUnitsNumber(characterId)
 
                             res.render(`../views/pages/planet/buildings/building-${index}.pug`, {
                                 title: title,
@@ -245,6 +266,9 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
                                 costs: units_costs,
                                 population: totalPopulation,
                                 crafts: crafts,
+                                nbShips: nb_ships,
+                                maxShips: max_ships.ship_capacity,
+                                isCraft: isCraft,
                                 showMenuBar: true
                             });
                         } else {
@@ -255,6 +279,7 @@ router.get('/building-page/:index', requireAuth, async (req, res) => {
                                 resources: resources,
                                 ship: null,
                                 population: totalPopulation,
+                                isCraft: isCraft,
                                 showMenuBar: true
                             });
                         }
@@ -427,10 +452,10 @@ router.post('/crafting', requireAuth, async (req, res) => {
         //console.log(characteristics)
 
         //Calcul ship number
-        const nb_ships = await db.getUnitsNumber(characterId)
+        const nb_ships = await db.getCharacterUnitsNumber(characterId)
 
         //Can craft
-        if (nb_ships + craftNumber <= characteristics.ship_capacity) {
+        if (nb_ships.ship_number + craftNumber <= characteristics.ship_capacity) {
             // Access individual properties
             const name = costsObject.name;
             const steel = parseInt(costsObject.steel, 10) * craftNumber;

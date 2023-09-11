@@ -34,6 +34,15 @@ html {
     background-color: red; /* Adjust the event appearance */
 }
 
+.ship {
+    position: absolute;
+    width: 30px; /* Adjust the size of your events */
+    height: 30px;
+    top: 320px;
+    left: 340px;
+    background-color: blue; /* Adjust the event appearance */
+}
+
 .event:hover {
     cursor: pointer;
 }

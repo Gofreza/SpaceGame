@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
+const {OPEN_CREATE} = require("sqlite3");
 
 function setupDatabase() {
     const db = new sqlite3.Database('./database/database.db');
@@ -26,6 +27,7 @@ function setupDatabase() {
     technology INTEGER NOT NULL,
     imgurl TEXT NOT NULL,
     user_id INTEGER NOT NULL,
+    ship_number INTEGER,
     FOREIGN KEY(user_id) REFERENCES users(id)
     )`);
 
@@ -202,14 +204,32 @@ function setupDatabase() {
     FOREIGN KEY (character_id) REFERENCES characters(id)
     )`)
 
-    /*db.run(`CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY,
+    db.run(`CREATE TABLE IF NOT EXISTS events (
+    id INTEGER,
     name TEXT,
-
+    description TEXT,
+    difficulty INTEGER,
+    units TEXT,
+    reward TEXT,
+    PRIMARY KEY (id, difficulty)
     )`)
-    
-     */
 
+    db.run(`CREATE TABLE IF NOT EXISTS current_events (
+        id INTEGER,
+        difficulty INTEGER,
+        PRIMARY KEY (id, difficulty)
+    )`)
+
+    db.run(`CREATE TABLE IF NOT EXISTS character_combats (
+    character_id INTEGER,
+    mission_id INTEGER,
+    difficulty INTEGER,
+    fleet TEXT,
+    completion_time INTEGER,
+    return_time INTEGER,
+    FOREIGN KEY (character_id) REFERENCES characters(id)
+    PRIMARY KEY (character_id, mission_id, difficulty)
+    )`)
 
     /*
         FILL TABLES
@@ -412,7 +432,7 @@ function setupDatabase() {
 
         // Function to add a new character to the characters table
         function addCharacter(name, level, characterClass, imgurl, userId, callback) {
-            let sql = `INSERT INTO characters (name, level, class, combat, industry, technology, imgurl, user_id) VALUES (?, ?, ?, 5, 5, 5, ?, ?)`;
+            let sql = `INSERT INTO characters (name, level, class, combat, industry, technology, imgurl, user_id, ship_number) VALUES (?, ?, ?, 5, 5, 5, ?, ?, 8)`;
 
             db.run(sql, [name, level, characterClass, imgurl, userId], function (err) {
                 if (err) {
@@ -598,8 +618,18 @@ function setupDatabase() {
                                         return callback(err);
                                     }
 
-                                    console.log('Character deleted from the database.');
-                                    callback(null, true);
+                                    const sql = `DELETE FROM character_units WHERE character_id = ?`
+
+                                    db.run(sql, [character.id], (err) => {
+
+                                        if (err) {
+                                            console.error('Error deleting character_units from the database:', err.message);
+                                            return callback(err);
+                                        }
+
+                                        console.log('Character deleted from the database.');
+                                        callback(null, true);
+                                    })
 
                                 })
 
@@ -626,6 +656,16 @@ function setupDatabase() {
                 console.log(`User ${userId} has character: ${hasCharacter}`);
                 callback(null, hasCharacter);
             });
+        }
+
+        async function addCharacterUnit(characterId, shipToAdd) {
+            const sql = `UPDATE characters SET ship_number = ship_number + ? WHERE id = ?`
+
+            db.run(sql, [shipToAdd, characterId], (err) => {
+                if (err) {
+                    console.error("Error : ", err.message)
+                }
+            })
         }
 
     /*  =======================
@@ -936,50 +976,6 @@ function setupDatabase() {
 
         }
 
-        // Function to retrieve the amount of resources for a character
-        //Deprecated
-        async function getResourcesForCharacter(userId, callback) {
-
-            const character = await new Promise((resolve, reject) => {
-                findCharacterByUserId(userId, (err, row) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(row);
-                    }
-                });
-            });
-
-            //console.log("HERE");
-            //console.log(character);
-
-            const sql = `SELECT * FROM character_resources WHERE character_id = ?`;
-
-            db.get(sql, [character.id], (err, row) => {
-                if (err) {
-                    console.error('Error retrieving resources:', err.message);
-                    callback(err, null);
-                } else {
-                    if (!row) {
-                        console.log('Character resources not found.');
-                        callback(null, null);
-                    } else {
-                        const resources = {
-                            iron: row.iron,
-                            steel: row.steel,
-                            copper: row.copper,
-                            components: row.components,
-                            petrol: row.petrol,
-                            plastic: row.plastic,
-                            money: row.money,
-                            crystal: row.crystal
-                        };
-                        callback(null, resources);
-                    }
-                }
-            });
-        }
-
         async function getResourcesForCharacterBis(characterId) {
             try {
                 const sql = `SELECT * FROM character_resources WHERE character_id = ?`;
@@ -1015,6 +1011,15 @@ function setupDatabase() {
             }
         }
 
+        async function addMoney(characterId, moneyToAdd) {
+            const sql = `UPDATE character_resources SET money = money + ? WHERE character_id = ?`
+
+            db.run(sql, [moneyToAdd, characterId], (err) => {
+                if (err) {
+                    console.error("Error addMoney: ", err.message)
+                }
+            })
+        }
 
     /*
         REFINING
@@ -1185,36 +1190,31 @@ function setupDatabase() {
                 const {level} = await getLevel(characterId, buildingId);
                 //console.log(level)
 
-                if (level !== 0) {
-                    const getCharacteristics = (buildingId, level) => {
-                        return new Promise((resolve, reject) => {
-                            const sql = `SELECT * FROM building_characteristics WHERE building_id = ? AND level = ?`;
-                            db.get(sql, [buildingId, level], (err, characteristics) => {
-                                if (err) {
-                                    reject(err);
-                                } else {
-                                    resolve(characteristics);
-                                }
-                            });
+                const getCharacteristics = (buildingId, level) => {
+                    return new Promise((resolve, reject) => {
+                        const sql = `SELECT * FROM building_characteristics WHERE building_id = ? AND level = ?`;
+                        db.get(sql, [buildingId, level], (err, characteristics) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(characteristics);
+                            }
                         });
-                    };
+                    });
+                };
 
-                    const characteristics = await getCharacteristics(buildingId, level);
-                    //console.log(characteristics)
-                    if (!characteristics) {
-                        console.log('Character characteristics not found.');
-                        return null;
-                    }
+                const characteristics = await getCharacteristics(buildingId, level);
+                //console.log(characteristics)
+                if (!characteristics) {
+                    console.log('Character characteristics not found.');
+                    return null;
+                }
 
-                    return characteristics;
-                }
-                else {
-                    console.log('Error getCharacteristicsBis, building level is 0.');
-                    return null
-                }
+                return characteristics;
+
 
             } catch (err) {
-                console.error('Error in getCharacteristics:', err.message);
+                console.error('Error in getCharacteristicsBis:', err.message);
                 return null;
             }
         }
@@ -1651,6 +1651,21 @@ function setupDatabase() {
          UNITS FUNCTIONS
          ======================= */
 
+        function transformToUnderscoreCase(inputString) {
+            // Convert the string to lowercase and replace spaces with underscores
+            return inputString.toLowerCase().replace(/ /g, '_');
+        }
+        function transformToName(key) {
+            // Split the key into words using underscores as separators
+            const words = key.split('_');
+
+            // Capitalize the first letter of each word
+            const capitalizedWords = words.map(word => word.charAt(0).toUpperCase() + word.slice(1));
+
+            // Join the words back together with spaces
+            return capitalizedWords.join(' ');
+        }
+
         async function getUnitsCharacteristics(name) {
             const sql = `SELECT * FROM units_characteristics WHERE name = ? ORDER BY print_order`
 
@@ -1666,6 +1681,23 @@ function setupDatabase() {
             });
         }
 
+        async function getUnitStat(unitName) {
+            const name = transformToName(unitName)
+            const sql = `SELECT life, armor, shield, storage_capacity, speed, damage FROM units_characteristics WHERE name = ?`
+
+            return new Promise((resolve, reject) => {
+                db.get(sql, [name], (err, characteristics) => {
+                    if (err) {
+                        console.error("Error getUnitsCharacteristics:", err.message);
+                        reject(err);
+                    } else {
+                        resolve(characteristics);
+                    }
+                });
+            });
+
+        }
+
         async function getUnitsCosts(name) {
             const sql = `SELECT * FROM units_costs WHERE name = ?`
 
@@ -1679,6 +1711,26 @@ function setupDatabase() {
                     }
                 })
             })
+        }
+
+        async function getUnitNumber(unit, characterId) {
+            // Ensure that the unit parameter is properly enclosed in single quotes
+            const unitDBName = transformToUnderscoreCase(unit);
+
+            const sql = `SELECT ${unitDBName} FROM character_units WHERE character_id = ?`;
+
+            return new Promise((resolve, reject) => {
+                db.get(sql, [characterId], (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving units number:', err.message);
+                        reject(err);
+                    } else {
+                        // Access the unit value using the key (e.g., row['Small Fighter']);
+                        const value = row[unitDBName];
+                        resolve(value);
+                    }
+                });
+            });
         }
 
         async function getUnitsNumber(characterId) {
@@ -1712,6 +1764,21 @@ function setupDatabase() {
             });
         }
 
+        async function getCharacterUnitsNumber(characterId) {
+            const sql = `SELECT ship_number FROM characters WHERE id = ?`
+
+            return new Promise((resolve, reject) => {
+                db.get(sql, [characterId], (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving character units:', err.message);
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+        }
+
         async function addUnit(unit, unitToAdd, characterId) {
 
             const characteristics = await getCharacteristicsBis(characterId, 5)
@@ -1719,10 +1786,10 @@ function setupDatabase() {
                 //console.log(characteristics)
 
                 //Calcul ship number
-                const nb_ships = await getUnitsNumber(characterId)
+                const nb_ships = await getCharacterUnitsNumber(characterId)
 
-                if (nb_ships + unitToAdd <= characteristics.ship_capacity) {
-                    console.log(nb_ships, unitToAdd, characteristics.ship_capacity)
+                if (nb_ships.ship_number + unitToAdd <= characteristics.ship_capacity) {
+                    console.log(nb_ships.ship_number, unitToAdd, characteristics.ship_capacity)
                     console.log("Ok")
                     console.log(unit, unitToAdd, characterId)
                     const sql = `UPDATE character_units SET \`${unit}\` = \`${unit}\` + ? WHERE character_id = ?`
@@ -1732,6 +1799,8 @@ function setupDatabase() {
                             console.error("Error addUnit:", err.message)
                         }
                     })
+
+                    await addCharacterUnit(characterId, unitToAdd)
 
                     return "Unit added"
                 }
@@ -1746,6 +1815,85 @@ function setupDatabase() {
             }
 
         }
+
+        async function deleteUnit(unit, unitToDelete, characterId) {
+            //Delete from characters and character_units
+            let sql = `UPDATE character_units SET \`${unit}\` = \`${unit}\` - ? WHERE character_id = ?`
+
+            db.run(sql, [unitToDelete, characterId], (err) => {
+                if (err) {
+                    console.error("Error : ", err.message)
+                }
+            })
+
+            sql = `UPDATE characters SET ship_number = ship_number - ? WHERE id = ?`
+
+            db.run(sql, [unitToDelete, characterId], (err) => {
+                if (err) {
+                    console.error("Error : ", err.message)
+                }
+            })
+
+        }
+
+        async function sendUnits(unit, unitToDelete, characterId) {
+            let sql = `UPDATE character_units SET \`${unit}\` = \`${unit}\` - ? WHERE character_id = ?`
+
+            db.run(sql, [unitToDelete, characterId], (err) => {
+                if (err) {
+                    console.error("Error : ", err.message)
+                }
+            })
+        }
+
+        async function restoreUnits(unit, unitToAdd, characterId) {
+            const sql = `UPDATE character_units SET \`${unit}\` = \`${unit}\` + ? WHERE character_id = ?`
+
+            db.run(sql, [unitToAdd, characterId], (err) => {
+                if (err) {
+                    console.error("Error restoreUnit:", err.message)
+                }
+            })
+        }
+
+        async function getFleetSpeed(characterId) {
+            const units = await getUnits(characterId)
+            let unitsCount = 0
+            let totalSpeed = 0; // Total of all ship speeds
+            let totalWeight = 0; // Total weight of all ships
+            //console.log(units)
+
+            for (const shipName in units) {
+                if (units.hasOwnProperty(shipName)) {
+                    if (shipName !== 'id' && shipName !== 'character_id') {
+                        const shipNumber = units[shipName];
+                        const characteristic = await getUnitsCharacteristics(transformToName(shipName))
+
+                        if (shipNumber !== 0) {
+                            unitsCount += 1
+                            // Calculate the weight (inverse of speed)
+                            const weight = 1 / characteristic.speed;
+
+                            // Add the weighted speed to the total
+                            totalSpeed += shipNumber * characteristic.speed * weight;
+
+                            // Add the weight to the total weight
+                            totalWeight += shipNumber * weight;
+                        }
+
+                    }
+                }
+            }
+
+            // Calculate the weighted average speed
+            const weightedAverageSpeed = totalSpeed / totalWeight;
+
+            return parseFloat(weightedAverageSpeed.toFixed(1))
+        }
+
+    /*  =======================
+        CRAFT FUNCTIONS
+        ======================= */
 
         async function addCraftToCharacter(characterId, shipName, craftNumber, completionTime) {
             const sql = `INSERT INTO character_craft (character_id, ship_name, craft_number, completion_time) VALUES (?, ?, ?, ?)`
@@ -1782,13 +1930,312 @@ function setupDatabase() {
             });
         }
 
+    /*  =======================
+         COMBATS FUNCTIONS
+         ======================= */
+
+        async function addCombat(characterId, distance, eventInfo) {
+
+            distance = parseFloat(distance.toFixed(1))
+
+            const fleetSpeed = await getFleetSpeed(characterId)
+            //console.log("fleetspeed:", fleetSpeed)
+            //console.log("distance:", distance)
+
+            let travelTime = distance / fleetSpeed
+            travelTime = parseFloat(travelTime.toFixed(1))
+            //console.log("Min:",travelTime)
+            //Travel time in millisecond
+            travelTime = Math.ceil(travelTime * 60000)
+            //console.log("Milli:",travelTime)
+
+            const completionTime = Date.now() + travelTime
+
+            //Event info
+            const eventId = eventInfo[0]
+            const eventDifficulty = eventInfo[2]
+
+            //Fleet
+            const fleet = await getUnits(characterId)
+            let fleetString = "";
+            for (const key in fleet) {
+                if (fleet.hasOwnProperty(key) && key !== "id" && key !== "character_id") {
+                    await sendUnits(key, fleet[key], characterId)
+                    fleetString += key + ', ' + fleet[key] + ', ';
+                }
+            }
+            // Remove the trailing comma and space if needed
+            fleetString = fleetString.slice(0, -2);
+            const sql = `INSERT INTO character_combats (character_id, mission_id, difficulty, fleet, completion_time, return_time, distance) VALUES (?,?,?,?,?,?,?)`
+
+            db.run(sql, [characterId, eventId, eventDifficulty, fleetString, completionTime, 0, distance], (err) => {
+                if (err) {
+                    console.error("Error addCombat: ", err.message)
+                }
+            })
+
+            return completionTime
+        }
+
+        async function getCombatFleet(characterId, missionId, difficulty) {
+            const sql = `SELECT fleet FROM character_combats WHERE character_id = ? AND mission_id = ? AND difficulty = ?`
+
+            return new Promise((resolve, reject) => {
+                db.all(sql, [characterId, missionId, difficulty], (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving units number:', err.message);
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+        }
+
+        async function updateCombatFleet(characterId, fleet, missionId, difficulty) {
+            const sql = `UPDATE character_combats SET fleet = ? WHERE character_id = ? AND mission_id = ? AND difficulty = ?`
+
+            db.run(sql, [fleet, characterId, missionId, difficulty], (err) => {
+                if (err) {
+                    console.error("Error updateCombatFleet: ", err.message)
+                }
+            })
+        }
+
+        async function updateCombatsTime(characterId, missionId, difficulty, completionTime, returnTime) {
+            if (completionTime) {
+                console.log("To implement.")
+            }
+            else {
+                const sql = `UPDATE character_combats SET completion_time = ? AND return_time = ? WHERE character_id = ? AND mission_id = ? AND difficulty = ?`
+
+                db.run(sql, [null, returnTime, characterId, missionId, difficulty], (err) => {
+                    if (err) {
+                        console.error("Error updateCombatsTime returnTime: ", err.message)
+                    }
+                })
+
+            }
+        }
+
+        async function getCombatFleetSpeed(characterId, fleet) {
+            const splitFleet = fleet.split(', ')
+            let totalSpeed = 0; // Total of all ship speeds
+            let totalWeight = 0; // Total weight of all ships
+            //console.log(splitFleet, splitFleet.length)
+
+            for (let i = 0; i < splitFleet.length; i+=2) {
+                const unitStats = await getUnitStat(splitFleet[i])
+                //console.log(unitStats)
+                const weight = 1 / unitStats.speed;
+
+                // Add the weighted speed to the total
+                totalSpeed += splitFleet[i+1] * unitStats.speed * weight;
+
+                // Add the weight to the total weight
+                totalWeight += splitFleet[i+1] * weight;
+            }
+
+            const weightedAverageSpeed = totalSpeed / totalWeight;
+
+            return parseFloat(weightedAverageSpeed.toFixed(1))
+
+        }
+
+        async function getEnemyFleet(missionId, difficulty) {
+            const sql = `SELECT units FROM events WHERE id = ? AND difficulty = ?`
+
+            return new Promise((resolve, reject) => {
+                db.all(sql, [missionId, difficulty], (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving units number:', err.message);
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+        }
+
+        async function deleteCombat(characterId, missionId, difficulty) {
+            const sql = `DELETE FROM character_combats WHERE character_id = ? AND mission_id = ? AND difficulty = ?`
+
+            db.run(sql, [characterId, missionId, difficulty], (err) => {
+                if (err) {
+                    console.error("Error:", err.message)
+                }
+                console.log("Deleted combat")
+            })
+
+        }
+
+        async function checkIfThereAreCombats(characterId) {
+            const sql = `SELECT * FROM character_combats WHERE character_id = ?`
+
+            return new Promise((resolve, reject) => {
+                db.get(sql, [characterId], (err, rows) => {
+                    if (err) {
+                        console.error('Error checking combats:', err.message);
+                        reject(err);
+                    } else {
+                        if (rows) {
+                            resolve(rows);
+                        }
+                        else {
+                            resolve(null)
+                        }
+
+                    }
+                });
+            });
+
+        }
+
+        async function getReward(missionId, difficulty) {
+            const sql = `SELECT reward FROM events WHERE id = ? AND difficulty = ?`
+
+            return new Promise((resolve, reject) => {
+                db.all(sql, [missionId, difficulty], (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving units number:', err.message);
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+        }
+
+    /*  =======================
+         EVENTS FUNCTIONS
+         ======================= */
+
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        async function getMaxEventId() {
+            const sql = `SELECT id FROM events ORDER BY id DESC LIMIT 1`;
+
+            return new Promise((resolve, reject) => {
+                db.all(sql, (err, rows) => {
+                    if (err) {
+                        console.error('Error retrieving max id:', err.message);
+                        reject(err);
+                    } else {
+                        // Check if there are rows returned
+                        if (rows.length > 0) {
+                            // Extract the 'id' value from the first row
+                            const maxId = rows[0].id;
+                            resolve(maxId);
+                        } else {
+                            // Handle the case when no rows are returned (e.g., the table is empty)
+                            resolve(null); // You can choose to resolve with null or any other value
+                        }
+                    }
+                });
+            });
+        }
+
+        async function addEvent(id, difficulty) {
+            const sql = `INSERT INTO current_events (id, difficulty) VALUES (?, ?)`
+
+            db.run(sql, [id, difficulty], (err) => {
+                if (err) {
+                    console.error("Error :", err.message)
+                }
+            })
+        }
+
+        async function deleteEvent(id, difficulty) {
+            const sql = `DELETE FROM current_events WHERE id = ? AND difficulty = ?`
+
+            db.run(sql, [id, difficulty], (err) => {
+                if (err) {
+                    console.error("Error :", err.message)
+                }
+            })
+        }
+
+        async function deleteAllEvents() {
+            const sql = `DELETE FROM current_events`
+
+            db.run(sql, (err) => {
+                if (err) {
+                    console.error("Error :", err.message)
+                }
+            })
+        }
+
+        async function checkIfExists(id, difficulty) {
+            const sql = 'SELECT COUNT(*) AS count FROM current_events WHERE id = ? AND difficulty = ?';
+
+            return new Promise((resolve, reject) => {
+                db.get(sql, [id, difficulty], (err, row) => {
+                    if (err) {
+                        console.error('Error:', err.message);
+                        reject(err)
+                    }
+
+                    if (row.count > 0) {
+                        //console.log(`Row with id ${id} and difficulty ${difficulty} exists.`);
+                        resolve(true)
+                    } else {
+                        //console.log(`Row with id ${id} and difficulty ${difficulty} does not exist.`);
+                        resolve(false)
+                    }
+
+                });
+            });
+
+        }
+
+        async function getEvents() {
+            const maxId = await getMaxEventId();
+            const maxDifficulty = 5; // Set the maximum difficulty
+
+            // Function to generate a random event
+            function generateRandomEvent() {
+                const id = getRandomInt(1, maxId);
+                const difficulty = getRandomInt(1, maxDifficulty);
+                return [id, difficulty];
+            }
+
+            // Generate a random event
+            let event = generateRandomEvent();
+            //console.log(event)
+
+            // Keep generating events until we find one that's not in current_events
+            while (await checkIfExists(event[0], event[1])) {
+                event = generateRandomEvent();
+            }
+
+            const sql = `SELECT * FROM events WHERE id = ? AND difficulty = ?`;
+
+            return new Promise((resolve, reject) => {
+                db.all(sql, [event[0], event[1]], async (err, row) => {
+                    if (err) {
+                        console.error('Error retrieving event:', err.message);
+                        reject(err);
+                    } else {
+                        //console.log(row);
+                        //current_events.push(event);
+                        await addEvent(event[0], event[1])
+                        resolve(row);
+                    }
+                });
+            });
+        }
+
     return {
         //Users
         createUser, findUserByUsername, addCharacter, findCharacterByUserId, deleteCharacter, changePassword, getCharacterAttributesByUserId, hasCharacter,
         //Buildings
         getBuildingLevelUpCost, canUpdateBuilding, getBuildingData, getCharacterBuildingInfo, updateBuildingLevel,
         //Resources
-        addOrUpdateResourcesForCharacter, updateCharacterResources, getResourcesForCharacterBis, updateResourceInDatabase, subtractResourceInDatabase,
+        addOrUpdateResourcesForCharacter, updateCharacterResources, getResourcesForCharacterBis, updateResourceInDatabase, subtractResourceInDatabase, addMoney,
         //Refining
         getSmeltingRates, refineSteel, refineComponents, refinePlastic,
         //Mines
@@ -1800,7 +2247,11 @@ function setupDatabase() {
         //Selling
         getSellingPrice,
         //Units
-        getUnitsCharacteristics, getUnitsCosts, getUnitsNumber, getUnits, addUnit, addCraftToCharacter, deleteCraftFromCharacter, getCraftFromCharacter
+        getUnitsCharacteristics, getUnitStat, getUnitsCosts, getUnitsNumber, getUnits, getCharacterUnitsNumber, addUnit, deleteUnit, restoreUnits, addCraftToCharacter, deleteCraftFromCharacter, getCraftFromCharacter, getFleetSpeed,
+        //Combats
+        addCombat, getCombatFleet, updateCombatFleet, updateCombatsTime, getCombatFleetSpeed, getEnemyFleet, deleteCombat, checkIfThereAreCombats, getReward,
+        //Events
+        getEvents, deleteEvent, deleteAllEvents
     };
 }
 

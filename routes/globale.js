@@ -54,55 +54,42 @@ router.get('/dashboard', requireAuth, async (req, res) => {
                     });
                 });
 
-                const buildingsData = await new Promise((resolve, reject) => {
-                    db.getCharacterBuildingInfo(characterId, (err, level) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(level);
-                        }
-                    });
+                const max_pop = await db.getCharacteristicsBis(characterId, 3)
+
+                const characteristics = await db.getCharacteristicsBis(characterId, 5)
+                //console.log(characteristics)
+                const maxShips = characteristics.ship_capacity
+                const nb_ships = await db.getUnitsNumber(characterId)
+
+                //Check if crafts are finished (after log out the craftingRequests is empty so need to check with the db)
+                const crafts = await db.getCraftFromCharacter(characterId)
+                //console.log(crafts)
+                let isCraft = false
+
+                if (crafts.length !== 0) {
+                    isCraft = true
+                }
+
+                res.render("../views/pages/dashboard.pug", {
+                    title: "Dashboard",
+                    flash: flashMessages,
+                    username: username,
+                    imgUrl: imgUrl,
+                    name: name,
+                    level: level,
+                    combat_stat: combat,
+                    industry_stat: industry,
+                    technology_stat: technology,
+                    resources: resources,
+                    refiningStatus: refiningStatus,
+                    maxPop: max_pop.population_capacity,
+                    population: population,
+                    nbShips: nb_ships,
+                    maxShips: maxShips,
+                    crafts: isCraft,
+                    showMenuBar: true
                 });
 
-                const housingData = buildingsData.find(building => building.building_id === 3);
-
-                await db.getCharacteristics(userId, housingData.building_id, async (err, max_pop) => {
-
-                    if (err) {
-                        console.log('Route : Character characteristic not found !')
-                    }
-
-                    if (max_pop === null) {
-                        //Population de base
-                        max_pop = 200
-                    } else {
-                        //console.log(row)
-                        max_pop = max_pop.population_capacity
-                    }
-
-                    const characteristics = await db.getCharacteristicsBis(characterId, 5)
-                    const maxShips = characteristics.ship_capacity
-                    const nb_ships = await db.getUnitsNumber(characterId)
-
-                    res.render("../views/pages/dashboard.pug", {
-                        title: "Dashboard",
-                        flash: flashMessages,
-                        username: username,
-                        imgUrl: imgUrl,
-                        name: name,
-                        level: level,
-                        combat_stat: combat,
-                        industry_stat: industry,
-                        technology_stat: technology,
-                        resources: resources,
-                        refiningStatus: refiningStatus,
-                        maxPop: max_pop,
-                        population: population,
-                        nbShips: nb_ships,
-                        maxShips: maxShips,
-                        showMenuBar: true
-                    });
-                })
 
 
             }
@@ -370,14 +357,4 @@ router.get('/planet', requireAuth, (req, res) => {
     });
 });
 
-router.get('/stars_map', requireAuth, (req, res) => {
-
-    const flashMessages = req.flash(); // Retrieve flash messages from the session
-
-    res.render("../views/pages/stars_map.pug", {
-        title: "Base",
-        flash: flashMessages,
-        showMenuBar: true
-    });
-})
 module.exports = router;

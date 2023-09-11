@@ -67,7 +67,10 @@ block layout-content
                                 .refining-status-box.off
                                     span OFF
                         .ships
-                            p Ships : #{nbShips}/#{maxShips}
+                            if crafts
+                                a(href="/building-page/5") Ships: #{nbShips}/#{maxShips}*
+                            else
+                                a(href="/building-page/5") Ships: #{nbShips}/#{maxShips}
                     .clear-content
                         .population
                             table

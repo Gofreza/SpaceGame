@@ -7,7 +7,10 @@ block layout-content
     .page-container
         .building-container-extensive
             a(href="/building-page/5") To Ships Factory
-            p Hangar Capacity : #{nbShips}/#{maxShips} ships
+            if crafts
+                p Ships: #{nbShips}/#{maxShips}*
+            else
+                p Ships: #{nbShips}/#{maxShips}
             .ship-row
                 each ship in unitsCharacteristics
                     .ship-cell

@@ -65,13 +65,27 @@ router.post('/create_character',requireAuth ,requireNoCharacter, (req, res) => {
             res.redirect('/dashboard');
         }
 
-        db.addCharacter(name, 0, class_name, selectedImage, userId, (error) => {
+        db.addCharacter(name, 0, class_name, selectedImage, userId, async (error) => {
             if (error) {
                 console.error('Error occurred while creating user:', error);
                 res.status(500).send('Internal Server Error');
                 return;
             }
 
+            //Set global variables
+            const character = await new Promise((resolve, reject) => {
+                db.findCharacterByUserId(userId, (err, row) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+
+            req.session.characterId = character.id
+
+            //console.log("Character ID:", req.session.characterId)
             // Registration successful
             res.redirect('/dashboard');
         })

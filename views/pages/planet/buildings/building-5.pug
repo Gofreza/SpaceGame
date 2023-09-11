@@ -7,6 +7,10 @@ block layout-content
     .page-container
         .ship-container#reference-div
             a(href="/building-page/4") To Space Hangar
+            if isCraft
+                p Ships: #{nbShips}/#{maxShips}*
+            else
+                p Ships: #{nbShips}/#{maxShips}
             .ship-list
                 if ship !== null
                     each ship in ships
@@ -36,7 +40,7 @@ block layout-content
                                                             when "damage"
                                                                 span Damage: #{value}
                                                             when "crafting_time"
-                                                                - const craftingTime = parseInt(value)/60
+                                                                - const craftingTime = parseInt(value.replace(/\s/g, ''))/60000
                                                                 span Build Time: #{craftingTime} min
                                         // Find the costs associated with this ship
                                         - const shipCosts = costs.find(cost => cost.name === ship.name)
@@ -121,7 +125,7 @@ block layout-content
             });
 
             // JavaScript code to calculate and display countdowns
-            const data = !{JSON.stringify(crafts)}; // Replace 'craftingData' with your data
+            const data = !{JSON.stringify(crafts)};
             data.forEach(item => {
                 const completionTime = new Date(item.completion_time);
                 const now = new Date();

@@ -4,99 +4,13 @@ block css
     link(rel='stylesheet', href='/CSS/stars.css')
 block layout-content
     .page-container
+        .timer-container
+            span#timer 00:00
         .map-container
             img(src="/imgs/stelar_system.png")
     script.
-        // Script.js
-        document.addEventListener('DOMContentLoaded', () => {
-            const maxEvents = 5; // Maximum number of events on the map
-            const eventRate = 2500; // Rate at which events appear (in milliseconds)
-            const eventDuration = 25000; // Duration of each event (in milliseconds)
-            const eventQueue = []; // Queue to manage events
-            let intervalId = null; // Variable to store the interval ID
-            let timeoutId = null; // Variable to store the timeout ID
+        const current_events = [];
+        const fights = !{JSON.stringify(combats)};;
+    script(src="/JS/events.js")
 
-            // Define minimum X and Y coordinates
-            const minX = 50; // Minimum X coordinate
-            const minY = 50; // Minimum Y coordinate
-
-            // Function to create a new event with random position and info
-            function createEvent() {
-                if (eventQueue.length < maxEvents) {
-                    const event = document.createElement('div');
-                    event.className = 'event';
-
-                    // Generate a unique ID for the event
-                    const eventId = `event-${Date.now()}`;
-                    event.id = eventId;
-
-                    // Calculate random X and Y coordinates within the specified range
-                    const maxX = document.querySelector('.map-container').offsetWidth - (event.offsetWidth + 50);
-                    const maxY = document.querySelector('.map-container').offsetHeight - (event.offsetHeight + 50);
-                    const randomX = minX + Math.random() * (maxX - minX);
-                    const randomY = minY + Math.random() * (maxY - minY);
-
-                    // Apply the random coordinates to the event's style
-                    event.style.left = randomX + 'px';
-                    event.style.top = randomY + 'px';
-
-                    // Add a click event listener to the event
-                    event.addEventListener('click', () => {
-                        console.log(`Event clicked with ID: ${eventId}`);
-                        // You can add custom logic here to handle the click event.
-
-                        // Stop the interval
-                        clearInterval(intervalId);
-
-                        // Clear the timeout
-                        clearTimeout(timeoutId);
-
-                        // Create and display the info page
-                        const infoPage = document.createElement('div');
-                        infoPage.className = 'info-box';
-                        infoPage.style.display = 'block'
-                        infoPage.innerHTML = `<div class="info-content"> <h2>Event Info</h2><p>Event ID: ${eventId}</p> </div>`;
-
-                        document.body.appendChild(infoPage);
-
-                        // Add a close button to the info page
-                        const closeButton = document.createElement('button');
-                        closeButton.textContent = 'Close';
-                        closeButton.addEventListener('click', () => {
-                            infoPage.remove();
-                            // Resume the interval
-                            intervalId = setInterval(createEvent, eventRate);
-                        });
-
-                        infoPage.appendChild(closeButton);
-                    });
-
-                    // Append the event to the map container
-                    document.querySelector('.map-container').appendChild(event);
-
-                    // Add the event to the queue
-                    eventQueue.push(event);
-
-                    // Set a timeout to remove the event after the specified duration
-                    timeoutId = setTimeout(() => {
-                        event.remove();
-                        // Remove the event from the queue
-                        const eventIndex = eventQueue.indexOf(event);
-                        if (eventIndex !== -1) {
-                            eventQueue.splice(eventIndex, 1);
-                        }
-                    }, eventDuration);
-                }
-            }
-
-            // Function to start creating events
-            function startEventCreation() {
-                intervalId = setInterval(() => {
-                    createEvent();
-                }, eventRate);
-            }
-
-            // Start creating events
-            startEventCreation();
-        });
 
